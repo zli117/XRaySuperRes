@@ -15,6 +15,7 @@ class XRayDataset(Dataset):
         return len(self.indices)
 
     def __getitem__(self, item):
+        # TODO: Make sure to convert to single channel
         idx = self.indices[item]
         to_tensor = ToTensor()
         image = imread('%s%d.png' % (self.img_path_pfx, idx))
