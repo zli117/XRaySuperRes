@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 from skimage.data import imread
 from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
@@ -20,14 +20,12 @@ class XRayDataset(Dataset):
         to_tensor = ToTensor()
 
         # Only take the first channel. All channels are the same (gray scale)
-        image = imread('%s%05d.png' % (self.img_path_pfx, idx))[0]
-        image = np.expand_dims(image, 2)
-        image = to_tensor(image)
+        image = imread('%s%05d.png' % (self.img_path_pfx, idx))
+        image = torch.unsqueeze(to_tensor(image)[0], 0)
         result = [('image', image)]
         if self.target_path_pfx is not None:
-            target = imread('%s%05d.png' % (self.target_path_pfx, idx))[0]
-            target = np.expand_dims(target, 2)
-            target = to_tensor(target)
+            target = imread('%s%05d.png' % (self.target_path_pfx, idx))
+            target = torch.unsqueeze(to_tensor(target)[0], 0)
             result.append(('target', target))
         if self.transform is not None:
             result = list(map(lambda x: (x[0], self.transform(x[1])), result))
