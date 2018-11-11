@@ -1,6 +1,17 @@
 import argparse
 import sys
 
+import torch
+from sklearn.model_selection import train_test_split
+from torch import nn
+from torch.optim import Adam
+
+from defines import *
+from model.pytorch_example import ESPCN
+from toolbox.torch_state_samplers import TrackedRandomSampler
+from toolbox.train import TrackedTraining
+from util.XRayDataSet import XRayDataset
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Experiment 1')
@@ -30,3 +41,56 @@ def parse_args():
     return arg
 
 
+def cuda(x):
+    return x.cuda() if torch.cuda.is_available() else x
+
+
+args = parse_args()
+
+train_split, valid_split = train_test_split(TRAIN_IDX,
+                                            test_size=args.valid_portion)
+print('train split size: %d' % len(train_split))
+print('valid split size: %d' % len(valid_split))
+
+
+class Train(TrackedTraining):
+
+    def __init__(self, *args, **kwargs):
+        self.mse_loss = nn.MSELoss()
+        super().__init__(*args, **kwargs)
+
+    def parse_batch(self, batch):
+        image = cuda(batch['image'])
+        target = cuda(batch['target'])
+        return image, target
+
+    def loss_fn(self, output, target):
+        loss = self.mse_loss(output, target)
+        return torch.sqrt(loss)
+
+
+train_dataset = XRayDataset(train_split, os.path.join(TRAIN_IMG, 'train_'),
+                            os.path.join(TRAIN_TARGET, 'train_'))
+valid_dataset = XRayDataset(valid_split, os.path.join(TRAIN_IMG, 'train_'),
+                            os.path.join(TRAIN_TARGET, 'train_'))
+
+model = ESPCN(2)
+
+train_loader_config = {'num_workers': 8,
+                       'batch_size': args.train_batch_size,
+                       'sampler': TrackedRandomSampler(train_dataset)}
+inference_loader_config = {'num_workers': 10,
+                           'batch_size': args.valid_batch_size,
+                           'shuffle': False}
+
+optimizer_config = {'lr': 1e-4}
+
+train = Train(model, train_dataset, valid_dataset, Adam, args.save_model_prefix,
+              args.save_state_prefix, optimizer_config, train_loader_config,
+              inference_loader_config, epochs=args.epochs)
+if args.restore_state_path is not None:
+    state_dict = torch.load(args.restore_state_path)
+    train.load_state(state_dict)
+    del state_dict
+
+trained_model = train.train()
