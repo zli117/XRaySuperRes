@@ -88,6 +88,7 @@ optimizer_config = {'lr': 1e-5}
 train = Train(model, train_dataset, valid_dataset, Adam, args.save_model_prefix,
               args.save_state_prefix, optimizer_config, train_loader_config,
               inference_loader_config, epochs=args.epochs)
+
 if args.restore_state_path is not None:
     state_dict = torch.load(args.restore_state_path)
     train.load_state(state_dict)
