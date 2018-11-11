@@ -82,7 +82,7 @@ class TrackedTraining(Trackable):
                 self.model.train()
                 total_steps = self.curr_steps + len(train_loader)
                 progress_bar = ProgressBar(self.progress_bar_size,
-                                           ' loss: %.03f, batch: %d')
+                                           ' loss: %.06f, batch: %d')
                 for _, batch in enumerate(train_loader):
                     ipt, target = self.parse_batch(batch)
                     output = self.model(ipt)
