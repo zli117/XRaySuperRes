@@ -20,9 +20,9 @@ def parse_args():
     parser.add_argument('-s', '--sd_pickle', help='sd of all the input images')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.1,
                         help='portion of train dataset used for validation')
-    parser.add_argument('-t', '--train_batch_size', type=int, default=5,
+    parser.add_argument('-t', '--train_batch_size', type=int, default=128,
                         help='train batch size')
-    parser.add_argument('-b', '--valid_batch_size', type=int, default=18,
+    parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
     parser.add_argument('-p', '--save_model_prefix',
@@ -83,7 +83,7 @@ inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-4}
+optimizer_config = {'lr': 1e-5}
 
 train = Train(model, train_dataset, valid_dataset, Adam, args.save_model_prefix,
               args.save_state_prefix, optimizer_config, train_loader_config,
