@@ -2,10 +2,10 @@ import torch
 from skimage.data import imread
 from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
-from toolbox.states import State
+from toolbox.states import State, Trackable
 
 
-class XRayDataset(Dataset):
+class XRayDataset(Dataset, Trackable):
     def __init__(self, indices, img_path_pfx, target_path_pfx=None,
                  transform=None):
         self.indices = State(indices)
