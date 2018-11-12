@@ -123,3 +123,4 @@ data
 *.ipynb
 saved/*
 weights/*
+out/*

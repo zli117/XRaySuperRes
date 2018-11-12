@@ -61,7 +61,7 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
             indices = batch['idx']
             output = model(image).cpu().numpy()
             for j, idx in enumerate(indices):
-                out_img = np.zeros(128, 128, 3)
+                out_img = np.zeros((128, 128, 3))
                 out_img[:, :, 0] = output[j, 0]
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
