@@ -2,12 +2,12 @@ import argparse
 import sys
 
 import torch
-from model.espcn import ESPCN
 from sklearn.model_selection import train_test_split
 from torch import nn
-from torch.optim import Adam
+from torch.optim import SGD
 
 from defines import *
+from model.srresnet import NetG
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -76,7 +76,7 @@ train_dataset = XRayDataset(train_split, os.path.join(TRAIN_IMG, 'train_'),
 valid_dataset = XRayDataset(valid_split, os.path.join(TRAIN_IMG, 'train_'),
                             os.path.join(TRAIN_TARGET, 'train_'))
 
-model = ESPCN(2)
+model = NetG()
 
 train_loader_config = {'num_workers': 8,
                        'batch_size': args.train_batch_size,
@@ -85,13 +85,14 @@ inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-5}  # , 'momentum': 0.9, 'weight_decay': 0}
+optimizer_config = {'lr': 1e-5, 'momentum': 0.9, 'weight_decay': 1e-6}
 
 with torch.cuda.device_ctx_manager(args.device):
-    train = Train(model, train_dataset, valid_dataset, Adam,
+    train = Train(model, train_dataset, valid_dataset, SGD,
                   args.save_model_prefix,
                   args.save_state_prefix, optimizer_config, train_loader_config,
-                  inference_loader_config, epochs=args.epochs)
+                  inference_loader_config, epochs=args.epochs,
+                  save_optimizer=False)
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)

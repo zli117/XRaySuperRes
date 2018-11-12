@@ -16,12 +16,13 @@ class TrackedTraining(Trackable):
                  optimizer_cls, model_save_path_prefix,
                  state_save_path_prefix, optimizer_config: dict,
                  train_loader_config: dict, inference_loader_config: dict,
-                 epochs=1, gpu=True, progress_bar_size=20):
+                 epochs=1, gpu=True, progress_bar_size=20, save_optimizer=True):
         self.model = TorchState(model)
         self.optimizer_cls = optimizer_cls
-        self.optimizer = TorchState(
-            optimizer_cls(filter(lambda p: p.requires_grad, model.parameters()),
-                          **optimizer_config))
+        optimizer = optimizer_cls(
+            filter(lambda p: p.requires_grad, model.parameters()),
+            **optimizer_config)
+        self.optimizer = TorchState(optimizer) if save_optimizer else optimizer
         self.train_dataset = train_dataset
         self.valid_dataset = valid_dataset
 
