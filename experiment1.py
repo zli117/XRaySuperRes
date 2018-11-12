@@ -7,7 +7,7 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
-from model.pytorch_example import ESPCN
+from model.espcn import ESPCN
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset

@@ -2,18 +2,15 @@ import argparse
 import sys
 
 import torch
+from model.espcn import ESPCN
 from sklearn.model_selection import train_test_split
 from torch import nn
-from torch.optim import Adam, SGD
+from torch.optim import Adam
 
 from defines import *
-from model.espcn import ESPCN
-from model.srresnet import _NetG
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
-
-from torchsummary import summary
 
 
 def parse_args():
@@ -88,10 +85,11 @@ inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-5}#, 'momentum': 0.9, 'weight_decay': 0}
+optimizer_config = {'lr': 1e-5}  # , 'momentum': 0.9, 'weight_decay': 0}
 
 with torch.cuda.device_ctx_manager(args.device):
-    train = Train(model, train_dataset, valid_dataset, Adam, args.save_model_prefix,
+    train = Train(model, train_dataset, valid_dataset, Adam,
+                  args.save_model_prefix,
                   args.save_state_prefix, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
 
