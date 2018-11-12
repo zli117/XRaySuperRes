@@ -32,6 +32,8 @@ def parse_args():
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
+    parser.add_argument('-d', '--device', default=0, type=int,
+                        help='which device to run on')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -85,13 +87,15 @@ inference_loader_config = {'num_workers': 10,
 
 optimizer_config = {'lr': 1e-5}
 
-train = Train(model, train_dataset, valid_dataset, Adam, args.save_model_prefix,
-              args.save_state_prefix, optimizer_config, train_loader_config,
-              inference_loader_config, epochs=args.epochs)
+with torch.cuda.device_ctx_manager(args.device):
+    train = Train(model, train_dataset, valid_dataset, Adam,
+                  args.save_model_prefix, args.save_state_prefix,
+                  optimizer_config, train_loader_config,
+                  inference_loader_config, epochs=args.epochs)
 
-if args.restore_state_path is not None:
-    state_dict = torch.load(args.restore_state_path)
-    train.load_state(state_dict)
-    del state_dict
+    if args.restore_state_path is not None:
+        state_dict = torch.load(args.restore_state_path)
+        train.load_state(state_dict)
+        del state_dict
 
-trained_model = train.train()
+    trained_model = train.train()
