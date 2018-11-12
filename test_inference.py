@@ -1,9 +1,9 @@
 import argparse
 import sys
 
+import cv2
 import numpy as np
 import torch
-from scipy.misc import imsave
 from torch import nn
 from torch.utils.data import DataLoader
 
@@ -74,7 +74,8 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
                 out_img[:, :, 3] = 255
-                imsave(os.path.join(save_path, 'test_%05d.png' % idx), out_img)
+                cv2.imwrite(os.path.join(save_path, 'test_%05d.png' % idx),
+                            out_img)
             progress_bar.progress(i / total_steps * 100, i)
 
 
