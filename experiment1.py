@@ -88,6 +88,7 @@ inference_loader_config = {'num_workers': 10,
 optimizer_config = {'lr': 1e-5}
 
 with torch.cuda.device_ctx_manager(args.device):
+    print('On device:', torch.cuda.get_device_name(args.device))
     train = Train(model, train_dataset, valid_dataset, Adam,
                   args.save_model_prefix, args.save_state_prefix,
                   optimizer_config, train_loader_config,
