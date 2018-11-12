@@ -22,7 +22,7 @@ def parse_args():
                         help='test batch size')
     parser.add_argument('-f', '--saved_model_file',
                         help='file name for model used for submission')
-    parser.add_argument('-o', '--out_csv', help='file name for result csv')
+    parser.add_argument('-o', '--out_dir', help='output dir')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which gpu will this run on')
 
@@ -71,4 +71,4 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On Device:', torch.cuda.get_device_name(args.device))
-    test(model, test_loader, TEST_OUT)
+    test(model, test_loader, args.out_dir)
