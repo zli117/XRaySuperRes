@@ -49,6 +49,14 @@ test_loader = DataLoader(test_dataset, num_workers=8,
                          batch_size=args.batch_size, shuffle=False)
 
 
+def load_model(file_path, model: nn.Module):
+    obj = torch.load(file_path)
+    model_state = obj['model']
+    model.load_state_dict(model_state)
+    del model_state
+    return model
+
+
 def test(model: nn.Module, data_loader: DataLoader, save_path: str):
     model = cuda(model)
     torch.cuda.empty_cache()
@@ -71,4 +79,5 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On Device:', torch.cuda.get_device_name(args.device))
+    load_model(args.saved_model_file, model)
     test(model, test_loader, args.out_dir)
