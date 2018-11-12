@@ -59,7 +59,7 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
         for i, batch in enumerate(data_loader):
             image = cuda(batch['image'])
             indices = batch['idx']
-            output = model(image).numpy()
+            output = model(image).cpu().numpy()
             for j, idx in enumerate(indices):
                 out_img = np.zeros(128, 128, 3)
                 out_img[:, :, 0] = output[j, 0]
