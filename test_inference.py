@@ -74,7 +74,7 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
                 r, g, b = cv2.split(out_img)
-                alpha = np.ones((128, 128)) * 255
+                alpha = np.ones((128, 128))
                 out_img = cv2.merge((r, g, b, alpha))
                 cv2.imwrite(os.path.join(save_path, 'test_%05d.png' % idx),
                             out_img)
