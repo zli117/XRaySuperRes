@@ -69,12 +69,13 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
             indices = batch['idx']
             output = model(image).cpu().numpy()
             for j, idx in enumerate(indices):
-                out_img = np.zeros((128, 128, 3))
+                out_img = np.zeros((128, 128, 4))
                 out_img[:, :, 0] = output[j, 0]
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
+                out_img[:, :, 3] = np.ones((128, 128))
                 cv2.imwrite(os.path.join(save_path, 'test_%05d.png' % idx),
-                            out_img)
+                            out_img * 255)
             progress_bar.progress(i / total_steps * 100, i)
 
 
