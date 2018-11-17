@@ -15,9 +15,6 @@ from util.XRayDataSet import XRayDataset
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Experiment 1')
-    parser.add_argument('-m', '--mean_pickle',
-                        help='mean of all the input images')
-    parser.add_argument('-s', '--sd_pickle', help='sd of all the input images')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.1,
                         help='portion of train dataset used for validation')
     parser.add_argument('-t', '--train_batch_size', type=int, default=128,
