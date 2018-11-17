@@ -20,6 +20,8 @@ class ESPCN(nn.Module):
         x = self.relu(self.conv2(x))
         x = self.relu(self.conv3(x))
         x = self.pixel_shuffle(self.conv4(x))
+        if not self.training:
+            x *= 255
         return x
 
     def _initialize_weights(self):

@@ -39,8 +39,11 @@ class TrackedTraining(Trackable):
         self.gpu = gpu
         self.progress_bar_size = State(progress_bar_size)
 
-    def parse_batch(self, batch):
+    def parse_train_batch(self, batch):
         return torch.Tensor(0.0), torch.Tensor(0.0)
+
+    def parse_valid_batch(self, batch):
+        return self.parse_train_batch(batch)
 
     def loss_fn(self, output, target):
         return torch.Tensor(0.0)
@@ -51,7 +54,7 @@ class TrackedTraining(Trackable):
         self.model.eval()
         with torch.no_grad():
             for i, batch in enumerate(data_loader):
-                ipt, target = self.parse_batch(batch)
+                ipt, target = self.parse_valid_batch(batch)
                 output = self.model(ipt)
                 batch_size = output.shape[0]
                 loss = self.loss_fn(output, target)
@@ -85,7 +88,7 @@ class TrackedTraining(Trackable):
                 progress_bar = ProgressBar(self.progress_bar_size,
                                            ' loss: %.06f, batch: %d')
                 for _, batch in enumerate(train_loader):
-                    ipt, target = self.parse_batch(batch)
+                    ipt, target = self.parse_train_batch(batch)
                     output = self.model(ipt)
                     loss = self.loss_fn(output, target)
                     self.optimizer.zero_grad()

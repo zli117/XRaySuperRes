@@ -61,10 +61,14 @@ class Train(TrackedTraining):
         self.mse_loss = nn.MSELoss()
         super().__init__(*args, **kwargs)
 
-    def parse_batch(self, batch):
+    def parse_train_batch(self, batch):
         image = cuda(batch['image'])
         target = cuda(batch['target'])
         return image, target
+
+    def parse_valid_batch(self, batch):
+        image, target = self.parse_train_batch(batch)
+        return image, target * 255
 
     def loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
