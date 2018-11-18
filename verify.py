@@ -16,7 +16,7 @@ test_loader = DataLoader(test_dataset, num_workers=5)
 
 def verify(loader):
     for i, batch in enumerate(loader):
-        image = batch['image'][0]
+        image = batch['image'][0].numpy()
         idx = batch['idx']
         if np.sum(image[0] != image[1]) == 0 and np.sum(
                 image[1] != image[2]) == 0:
