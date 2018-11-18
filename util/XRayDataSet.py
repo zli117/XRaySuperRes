@@ -7,11 +7,12 @@ from toolbox.states import State, Trackable
 
 class XRayDataset(Dataset, Trackable):
     def __init__(self, indices, img_path_pfx, target_path_pfx=None,
-                 transform=None):
+                 transform=None, chan4=False):
         self.indices = State(indices)
         self.img_path_pfx = img_path_pfx
         self.target_path_pfx = target_path_pfx
         self.transform = transform
+        self.chan4 = chan4
 
     def __len__(self):
         return len(self.indices)
@@ -22,7 +23,8 @@ class XRayDataset(Dataset, Trackable):
 
         # Only take the first channel. All channels are the same (gray scale)
         image = imread('%s%05d.png' % (self.img_path_pfx, idx))
-        image = torch.unsqueeze(to_tensor(image)[0], 0)
+        if not self.chan4:
+            image = torch.unsqueeze(to_tensor(image)[0], 0)
         result = [('image', image), ('idx', idx)]
         if self.target_path_pfx is not None:
             target = imread('%s%05d.png' % (self.target_path_pfx, idx))
