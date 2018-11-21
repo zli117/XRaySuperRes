@@ -19,6 +19,7 @@ class TrackedKFold(Trackable):
         self.shuffle = State(shuffle)
         self.k_fold_seed = State(randint(0, 1e7))
         self.fold_idx = State(0)
+        # TODO: Find a better way to create initial train obj
         self.train_obj = self.get_train_obj(np.arange(data_length))
         self.results = State([])
 
@@ -42,12 +43,13 @@ class TrackedKFold(Trackable):
             for i, train_test in enumerate(k_fold.split(dummy_x, dummy_y)):
                 if i < self.fold_idx:
                     continue
-                self.train_obj = self.get_train_obj(train_test[0])
-                print('Fold:', i)
+                if not self.reloaded:
+                    self.train_obj = self.get_train_obj(train_test[0])
+                print('Fold:', self.fold_idx)
                 self.train_obj.train()
                 test_result = self.test(train_test[1])
                 self.results.append(test_result)
-                print('Fold %d test result: %s' % (i, test_result))
+                print('Fold %d test result: %s' % (self.fold_idx, test_result))
                 self.fold_idx += 1
 
         _run(self)

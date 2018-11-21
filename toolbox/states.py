@@ -78,10 +78,12 @@ class TrackableMeta(type):
                         return
                 value = state_dict[attr_name].load(value)
                 self.__dict__[attr_name] = value
+            self.reloaded = True
 
         attr['__setattr__'] = set_attr
         attr['save_state'] = save_state
         attr['load_state'] = load_state
+        attr['reloaded'] = False
         return super().__new__(cls, cls_name, bases, attr)
 
 
