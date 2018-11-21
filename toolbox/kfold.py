@@ -43,7 +43,7 @@ class TrackedKFold(Trackable):
             for i, train_test in enumerate(k_fold.split(dummy_x, dummy_y)):
                 if i < self.fold_idx:
                     continue
-                if not self.reloaded:
+                if not self.restored:
                     self.train_obj = self.get_train_obj(train_test[0])
                 print('Fold:', self.fold_idx)
                 self.train_obj.train()
