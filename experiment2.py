@@ -1,13 +1,16 @@
 import argparse
 import sys
 
+import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 from torch import nn
-from torch.optim import SGD
+from torch.optim import Adam
+from torch.utils.data import DataLoader
 
 from defines import *
-from model.srresnet import NetG
+from model.espcn import ESPCN
+from toolbox.kfold import TrackedKFold
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -22,15 +25,15 @@ def parse_args():
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-p', '--save_model_prefix',
-                        help='prefix for model saving files')
-    parser.add_argument('-f', '--save_state_prefix',
-                        help='prefix for saving trainer state')
+    parser.add_argument('-f', '--save_prefix',
+                        help='prefix for saving trainer state and model')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
+    parser.add_argument('-k', '--k_folds', type=int,
+                        help='k folds of validation')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -45,11 +48,6 @@ def cuda(x):
 
 
 args = parse_args()
-
-train_split, valid_split = train_test_split(TRAIN_IDX,
-                                            test_size=args.valid_portion)
-print('train split size: %d' % len(train_split))
-print('valid split size: %d' % len(valid_split))
 
 
 class Train(TrackedTraining):
@@ -72,33 +70,57 @@ class Train(TrackedTraining):
         return torch.sqrt(loss)
 
 
-train_dataset = XRayDataset(train_split, os.path.join(TRAIN_IMG, 'train_'),
-                            os.path.join(TRAIN_TARGET, 'train_'))
-valid_dataset = XRayDataset(valid_split, os.path.join(TRAIN_IMG, 'train_'),
-                            os.path.join(TRAIN_TARGET, 'train_'))
-
-model = NetG()
-
-train_loader_config = {'num_workers': 8,
-                       'batch_size': args.train_batch_size,
-                       'sampler': TrackedRandomSampler(train_dataset)}
 inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-5, 'momentum': 0.9, 'weight_decay': 1e-6}
+
+class KFold(TrackedKFold):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_train_obj(self, train_idx, fold_idx):
+        train_split, valid_split = train_test_split(
+            train_idx, test_size=args.valid_portion)
+        train_split = np.array(TRAIN_IDX)[train_split]
+        valid_split = np.array(TRAIN_IDX)[valid_split]
+        train_dataset = XRayDataset(train_split,
+                                    os.path.join(TRAIN_IMG, 'train_'),
+                                    os.path.join(TRAIN_TARGET, 'train_'))
+        valid_dataset = XRayDataset(valid_split,
+                                    os.path.join(TRAIN_IMG, 'train_'),
+                                    os.path.join(TRAIN_TARGET, 'train_'))
+        train_loader_config = {'num_workers': 8,
+                               'batch_size': args.train_batch_size,
+                               'sampler': TrackedRandomSampler(train_dataset)}
+        save_path_pfx = '%s_%d_' % (self.state_save_path, fold_idx)
+        train_obj = Train(model, train_dataset, valid_dataset, Adam,
+                          save_path_pfx, save_path_pfx,
+                          optimizer_config, train_loader_config,
+                          inference_loader_config, epochs=args.epochs)
+        return train_obj
+
+    def test(self, test_idx):
+        test_split = np.array(TRAIN_IDX)[test_idx]
+        test_dataset = XRayDataset(test_split,
+                                   os.path.join(TRAIN_IMG, 'train_'),
+                                   os.path.join(TRAIN_TARGET, 'train_'))
+        return self.train_obj.validate(
+            DataLoader(test_dataset, **inference_loader_config))
+
+
+model = ESPCN(2)
+
+optimizer_config = {'lr': 1e-5} #, 'momentum': 0.9, 'weight_decay': 1e-6}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    train = Train(model, train_dataset, valid_dataset, SGD,
-                  args.save_model_prefix,
-                  args.save_state_prefix, optimizer_config, train_loader_config,
-                  inference_loader_config, epochs=args.epochs,
-                  save_optimizer=False)
+    k_fold = KFold(args.save_prefix, model, args.k_folds, len(TRAIN_IDX))
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)
-        train.load_state(state_dict)
+        k_fold.load_state(state_dict)
         del state_dict
 
-    trained_model = train.train()
+    k_fold.run()
+    print(k_fold.history)

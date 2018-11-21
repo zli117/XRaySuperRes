@@ -9,8 +9,7 @@ from toolbox.train import TrackedTraining, DummyTrainClass
 
 class TrackedKFold(Trackable):
     def __init__(self, state_save_path, model, k_folds, data_length,
-                 groups=None,
-                 shuffle=True):
+                 groups=None, shuffle=True):
         self.state_save_path = state_save_path
         # Won't save model twice
         self.model = model
@@ -23,7 +22,11 @@ class TrackedKFold(Trackable):
         self.train_obj = DummyTrainClass()
         self.results = State([])
 
-    def get_train_obj(self, train_idx) -> TrackedTraining:
+    @property
+    def history(self):
+        return self.results
+
+    def get_train_obj(self, train_idx, fold_idx) -> TrackedTraining:
         pass
 
     def test(self, test_idx):

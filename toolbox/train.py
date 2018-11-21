@@ -118,4 +118,5 @@ class TrackedTraining(Trackable):
 
 class DummyTrainClass(TrackedTraining):
     def __init__(self):
-        super().__init__(None, None, None, type, None, None, {}, {}, {})
+        super().__init__(None, None, None, lambda *args: None, None, None, {},
+                         {}, {})
