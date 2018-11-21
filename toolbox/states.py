@@ -133,16 +133,16 @@ def save_on_interrupt(save_path=None, exception_handling=None):
                 global nested_tracked_state
                 nested_tracked_state = True
                 old_handler = signal.signal(signal.SIGINT, handler)
-
-            out = None
-            try:
-                out = func(self, *args, **kwargs)
-            except KeyboardInterrupt:
-                pass
-            if top_level:
+                out = None
+                try:
+                    out = func(self, *args, **kwargs)
+                except KeyboardInterrupt:
+                    pass
                 signal.signal(signal.SIGINT, old_handler)
                 del nested_tracked_state
-            return out
+                return out
+            else:
+                return func(self, *args, **kwargs)
 
         return wrapper
 
