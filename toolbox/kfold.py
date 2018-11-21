@@ -1,5 +1,6 @@
 from random import randint
 
+import numpy as np
 from sklearn.model_selection import KFold
 
 from toolbox.states import Trackable, State, save_on_interrupt
@@ -7,12 +8,13 @@ from toolbox.train import TrackedTraining, DummyTrainClass
 
 
 class TrackedKFold(Trackable):
-    def __init__(self, state_save_path, model, k_folds, total_data, groups=None,
+    def __init__(self, state_save_path, model, k_folds, data_length,
+                 groups=None,
                  shuffle=True):
         self.state_save_path = state_save_path
         # Won't save model twice
         self.model = model
-        self.total_data = State(total_data)
+        self.data_length = State(data_length)
         self.groups = State(groups)
         self.k_folds = State(k_folds)
         self.shuffle = State(shuffle)
@@ -32,8 +34,9 @@ class TrackedKFold(Trackable):
         def _run(self):
             k_fold = KFold(self.k_folds, random_state=self.k_fold_seed,
                            shuffle=self.shuffle)
-            for i, train_test in enumerate(
-                    k_fold.split(self.data_x, self.data_y)):
+            dummy_x = np.arange(self.data_length).reshape(-1, 1)
+            dummy_y = np.arange(self.data_length)
+            for i, train_test in enumerate(k_fold.split(dummy_x, dummy_y)):
                 if i < self.fold_idx:
                     continue
                 self.train_obj = self.get_train_obj(train_test[0])
@@ -42,5 +45,6 @@ class TrackedKFold(Trackable):
                 test_result = self.test(train_test[1])
                 self.results.append(test_result)
                 print('Fold %d test result: %s' % (i, test_result))
+                self.fold_idx += 1
 
         _run(self)
