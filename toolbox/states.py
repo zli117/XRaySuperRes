@@ -121,7 +121,7 @@ def save_on_interrupt(save_path=None, exception_handling=None):
             process_name = current_process().name
 
             def handler(sig, frame):
-                print(self.__name__)
+                print(self.__class__)
                 if current_process().name == process_name:
                     if exception_handling is not None:
                         exception_handling(self)
