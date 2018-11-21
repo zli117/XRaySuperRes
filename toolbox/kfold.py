@@ -26,7 +26,7 @@ class TrackedKFold(Trackable):
     def history(self):
         return self.results
 
-    def get_train_obj(self, train_idx, fold_idx) -> TrackedTraining:
+    def get_train_obj(self, train_idx) -> TrackedTraining:
         pass
 
     def test(self, test_idx):

@@ -79,7 +79,7 @@ class KFold(TrackedKFold):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_train_obj(self, train_idx, fold_idx):
+    def get_train_obj(self, train_idx):
         train_split, valid_split = train_test_split(
             train_idx, test_size=args.valid_portion)
         train_split = np.array(TRAIN_IDX)[train_split]
@@ -93,7 +93,7 @@ class KFold(TrackedKFold):
         train_loader_config = {'num_workers': 8,
                                'batch_size': args.train_batch_size,
                                'sampler': TrackedRandomSampler(train_dataset)}
-        save_path_pfx = '%s_%d_' % (self.state_save_path, fold_idx)
+        save_path_pfx = '%s_%d_' % (self.state_save_path, self.fold_idx)
         train_obj = Train(model, train_dataset, valid_dataset, Adam,
                           save_path_pfx, save_path_pfx,
                           optimizer_config, train_loader_config,
