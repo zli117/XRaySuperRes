@@ -7,12 +7,13 @@ from toolbox.states import State, Trackable
 
 class XRayDataset(Dataset, Trackable):
     def __init__(self, indices, img_path_pfx, target_path_pfx=None,
-                 transform=None, chan4=False):
+                 transform=None, chan4=False, down_sample_target=False):
         self.indices = State(indices)
         self.img_path_pfx = img_path_pfx
         self.target_path_pfx = target_path_pfx
         self.transform = transform
         self.chan4 = chan4
+        self.down_sample_target = down_sample_target
 
     def __len__(self):
         return len(self.indices)

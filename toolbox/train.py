@@ -63,7 +63,7 @@ class TrackedTraining(Trackable):
         return total_loss / total_data
 
     def train(self):
-        @save_on_interrupt(self.state_save_path + '_interrupt.state')
+        @save_on_interrupt(self.state_save_path + 'interrupt.state')
         def _train(self):
             if torch.cuda.is_available() and self.gpu:
                 self.model.cuda()
@@ -114,3 +114,8 @@ class TrackedTraining(Trackable):
             return self.model
 
         return _train(self)
+
+
+class DummyTrainClass(TrackedTraining):
+    def __init__(self):
+        super().__init__(None, None, None, type, None, None, {}, {}, {})
