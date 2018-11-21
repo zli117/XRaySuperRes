@@ -93,7 +93,7 @@ class KFold(TrackedKFold):
         train_loader_config = {'num_workers': 8,
                                'batch_size': args.train_batch_size,
                                'sampler': TrackedRandomSampler(train_dataset)}
-        save_path_pfx = '%s_%d_' % (self.state_save_path, self.fold_idx)
+        save_path_pfx = '%s%d' % (self.state_save_path, self.fold_idx)
         train_obj = Train(self.model, train_dataset, valid_dataset, Adam,
                           save_path_pfx, save_path_pfx,
                           optimizer_config, train_loader_config,
