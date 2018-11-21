@@ -117,12 +117,11 @@ def save_on_interrupt(save_path=None, exception_handling=None):
     """
 
     def decorator(func):
-        current_process_name = current_process().name
-
         def wrapper(self, *args, **kwargs):
             process_name = current_process().name
 
             def handler(sig, frame):
+                print(self.__name__)
                 if current_process().name == process_name:
                     if exception_handling is not None:
                         exception_handling(self)
