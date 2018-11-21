@@ -19,7 +19,7 @@ class TrackedKFold(Trackable):
         self.shuffle = State(shuffle)
         self.k_fold_seed = State(randint(0, 1e7))
         self.fold_idx = State(0)
-        self.train_obj = self.get_train_obj([])
+        self.train_obj = self.get_train_obj([0])
         self.results = State([])
 
     @property
