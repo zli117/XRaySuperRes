@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 from toolbox.states import Trackable, State, save_on_interrupt
-from toolbox.train import TrackedTraining, DummyTrainClass
+from toolbox.train import TrackedTraining
 
 
 class TrackedKFold(Trackable):
@@ -19,7 +19,7 @@ class TrackedKFold(Trackable):
         self.shuffle = State(shuffle)
         self.k_fold_seed = State(randint(0, 1e7))
         self.fold_idx = State(0)
-        self.train_obj = DummyTrainClass(model)
+        self.train_obj = self.get_train_obj([])
         self.results = State([])
 
     @property
