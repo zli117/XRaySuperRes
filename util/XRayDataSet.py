@@ -35,7 +35,8 @@ class XRayDataset(Dataset, Trackable):
 
         # Only take the first channel. All channels are the same (gray scale)
         image = imread(os.path.join(self.img_dir, file_name))
-        image = to_tensor(image)
+        if len(image.shape) == 4:
+            image = to_tensor(image)
         if not self.chan4:
             image = torch.unsqueeze(image[0], 0)
         result = [('image', image), ('file_name', file_name)]
