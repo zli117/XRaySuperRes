@@ -78,10 +78,8 @@ class Train(TrackedTraining):
         return torch.sqrt(loss)
 
 
-train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
-                            chan1=False)
-valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
-                            chan1=False)
+train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
+valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
 
 model = ESPCN(2)
 
