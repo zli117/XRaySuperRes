@@ -34,6 +34,9 @@ def parse_args():
                         help='which device to run on')
     parser.add_argument('-k', '--k_folds', type=int,
                         help='k folds of validation')
+    parser.add_argument('-a', '--down_sample', action='store_true', type=bool,
+                        default=False,
+                        help='Down sampling the target to get input')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -86,10 +89,12 @@ class KFold(TrackedKFold):
         valid_split = np.array(TRAIN_IDX)[valid_split]
         train_dataset = XRayDataset(train_split,
                                     os.path.join(TRAIN_IMG, 'train_'),
-                                    os.path.join(TRAIN_TARGET, 'train_'))
+                                    os.path.join(TRAIN_TARGET, 'train_'),
+                                    down_sample_target=args.down_sample)
         valid_dataset = XRayDataset(valid_split,
                                     os.path.join(TRAIN_IMG, 'train_'),
-                                    os.path.join(TRAIN_TARGET, 'train_'))
+                                    os.path.join(TRAIN_TARGET, 'train_'),
+                                    down_sample_target=args.down_sample)
         train_loader_config = {'num_workers': 8,
                                'batch_size': args.train_batch_size,
                                'sampler': TrackedRandomSampler(train_dataset)}
@@ -104,14 +109,15 @@ class KFold(TrackedKFold):
         test_split = np.array(TRAIN_IDX)[test_idx]
         test_dataset = XRayDataset(test_split,
                                    os.path.join(TRAIN_IMG, 'train_'),
-                                   os.path.join(TRAIN_TARGET, 'train_'))
+                                   os.path.join(TRAIN_TARGET, 'train_'),
+                                   down_sample_target=args.down_sample)
         return self.train_obj.validate(
             DataLoader(test_dataset, **inference_loader_config))
 
 
 model = ESPCN(2)
 
-optimizer_config = {'lr': 1e-5} #, 'momentum': 0.9, 'weight_decay': 1e-6}
+optimizer_config = {'lr': 1e-5}  # , 'momentum': 0.9, 'weight_decay': 1e-6}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))

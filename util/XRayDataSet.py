@@ -1,5 +1,6 @@
 import torch
 from skimage.data import imread
+from scipy.misc import imresize
 from torch.utils.data import Dataset
 from torchvision.transforms import ToTensor
 from toolbox.states import State, Trackable
@@ -21,6 +22,12 @@ class XRayDataset(Dataset, Trackable):
     def __getitem__(self, item):
         idx = self.indices[item]
         to_tensor = ToTensor()
+
+        if self.down_sample_target:
+            target = imread('%s%05d.png' % (self.target_path_pfx, idx))
+            target = torch.unsqueeze(to_tensor(target)[0], 0)
+            image = imresize(target, 0.5)
+            return {'image': image, 'idx': idx, 'target': target}
 
         # Only take the first channel. All channels are the same (gray scale)
         image = imread('%s%05d.png' % (self.img_path_pfx, idx))
