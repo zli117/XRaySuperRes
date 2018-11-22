@@ -26,7 +26,7 @@ class XRayDataset(Dataset, Trackable):
         if self.down_sample_target:
             target = imread('%s%05d.png' % (self.target_path_pfx, idx))
             target = torch.unsqueeze(to_tensor(target)[0], 0)
-            image = imresize(target, 0.5)
+            image = torch.Tensor(imresize(target.numpy(), 0.5))
             return {'image': image, 'idx': idx, 'target': target}
 
         # Only take the first channel. All channels are the same (gray scale)
