@@ -70,7 +70,7 @@ class TrainDenoise(TrackedTraining):
         target = cuda(batch['target'])
         sr_out = self.sr_model(image)
         residual = sr_out - target
-        return image, residual
+        return sr_out, residual
 
     def loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
