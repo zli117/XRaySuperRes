@@ -31,6 +31,10 @@ def parse_args():
                              'from there')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
+    parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
+                        help='input image dir')
+    parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
+                        help='target image dir')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -46,7 +50,10 @@ def cuda(x):
 
 args = parse_args()
 
-train_split, valid_split = train_test_split(TRAIN_IDX,
+image_files = os.listdir(args.image_dir)
+target_files = os.listdir(args.target_dir)
+
+train_split, valid_split = train_test_split(image_files,
                                             test_size=args.valid_portion)
 print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
@@ -72,10 +79,8 @@ class Train(TrackedTraining):
         return torch.sqrt(loss)
 
 
-train_dataset = XRayDataset(train_split, os.path.join(TRAIN_IMG, 'train_'),
-                            os.path.join(TRAIN_TARGET, 'train_'))
-valid_dataset = XRayDataset(valid_split, os.path.join(TRAIN_IMG, 'train_'),
-                            os.path.join(TRAIN_TARGET, 'train_'))
+train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
+valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
 
 model = ESPCN(2)
 
