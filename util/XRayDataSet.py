@@ -38,7 +38,7 @@ class XRayDataset(Dataset, Trackable):
         if len(image.shape) == 4:
             image = to_tensor(image)
         else:
-            image = torch.Tensor(image)
+            image = torch.Tensor(image / 65536)
         if not self.chan4:
             image = torch.unsqueeze(image[0], 0)
         result = [('image', image), ('file_name', file_name)]
