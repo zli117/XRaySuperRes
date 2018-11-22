@@ -51,6 +51,9 @@ def cuda(x):
 
 args = parse_args()
 
+if args.down_sample:
+    print('Using input as down sampled from target')
+
 
 class Train(TrackedTraining):
 
