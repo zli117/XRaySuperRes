@@ -95,7 +95,7 @@ with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
     sr_model = load_model(args.sr_model, ESPCN(2))
     train = TrainDenoise(sr_model, dncnn, train_dataset, valid_dataset, Adam,
-                         args.save_model_prefix, args.save_state_prefix,
+                         args.save_prefix, args.save_prefix,
                          optimizer_config, train_loader_config,
                          inference_loader_config, epochs=args.epochs)
 
