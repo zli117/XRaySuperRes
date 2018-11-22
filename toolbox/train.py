@@ -11,6 +11,14 @@ def save_model(model: nn.Module, file_path, epoch, seed, step=None):
                 'step': step}, file_path)
 
 
+def load_model(file_path, model: nn.Module):
+    obj = torch.load(file_path)
+    model_state = obj['model']
+    model.load_state_dict(model_state)
+    del model_state
+    return model
+
+
 class TrackedTraining(Trackable):
     def __init__(self, model: nn.Module, train_dataset, valid_dataset,
                  optimizer_cls, model_save_path_prefix,

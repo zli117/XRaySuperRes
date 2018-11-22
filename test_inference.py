@@ -10,6 +10,7 @@ from torch.utils.data import DataLoader
 from defines import *
 from model.espcn import ESPCN
 from toolbox.progress_bar import ProgressBar
+from toolbox.train import load_model
 from util.XRayDataSet import XRayDataset
 
 
@@ -47,14 +48,6 @@ model = ESPCN(2)
 
 test_loader = DataLoader(test_dataset, num_workers=8,
                          batch_size=args.batch_size, shuffle=False)
-
-
-def load_model(file_path, model: nn.Module):
-    obj = torch.load(file_path)
-    model_state = obj['model']
-    model.load_state_dict(model_state)
-    del model_state
-    return model
 
 
 def test(model: nn.Module, data_loader: DataLoader, save_path: str):

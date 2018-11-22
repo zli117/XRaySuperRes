@@ -7,9 +7,10 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
+from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.torch_state_samplers import TrackedRandomSampler
-from toolbox.train import TrackedTraining
+from toolbox.train import TrackedTraining, load_model
 from util.XRayDataSet import XRayDataset
 
 
@@ -22,10 +23,8 @@ def parse_args():
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-p', '--save_model_prefix',
-                        help='prefix for model saving files')
-    parser.add_argument('-f', '--save_state_prefix',
-                        help='prefix for saving trainer state')
+    parser.add_argument('-s', '--save_prefix',
+                        help='prefix for saving model and state')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -35,6 +34,7 @@ def parse_args():
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
                         help='target image dir')
+    parser.add_argument('-m', '--sr_model', help='path for sr model')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -58,16 +58,19 @@ print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
 
-class Train(TrackedTraining):
-
-    def __init__(self, *args, **kwargs):
-        self.mse_loss = nn.MSELoss()
+class TrainDenoise(TrackedTraining):
+    def __init__(self, sr_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.sr_model = sr_model
+        self.sr_model.eval()
+        self.mse_loss = nn.MSELoss()
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
         target = cuda(batch['target'])
-        return image, target
+        sr_out = self.sr_model(image)
+        residual = sr_out - target
+        return image, residual
 
     def loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
@@ -76,8 +79,6 @@ class Train(TrackedTraining):
 
 train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
 valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
-
-model = ESPCN(2)
 
 train_loader_config = {'num_workers': 8,
                        'batch_size': args.train_batch_size,
@@ -88,12 +89,15 @@ inference_loader_config = {'num_workers': 10,
 
 optimizer_config = {'lr': 1e-5}
 
+dncnn = DnCNN(1)
+
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    train = Train(model, train_dataset, valid_dataset, Adam,
-                  args.save_model_prefix, args.save_state_prefix,
-                  optimizer_config, train_loader_config,
-                  inference_loader_config, epochs=args.epochs)
+    sr_model = load_model(args.sr_model, ESPCN(2))
+    train = TrainDenoise(sr_model, dncnn, train_dataset, valid_dataset, Adam,
+                         args.save_model_prefix, args.save_state_prefix,
+                         optimizer_config, train_loader_config,
+                         inference_loader_config, epochs=args.epochs)
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)
