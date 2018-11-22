@@ -19,6 +19,7 @@ def parse_args():
                         help='test batch size')
     parser.add_argument('-f', '--saved_model_file',
                         help='file name for model used for submission')
+    parser.add_argument('-i', '--in_dir', default=TEST_IMG, help='input dir')
     parser.add_argument('-o', '--out_dir', help='output dir')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which gpu will this run on')
@@ -38,7 +39,9 @@ def cuda(x):
     return x.cuda() if torch.cuda.is_available() else x
 
 
-test_dataset = XRayDataset(TEST_IDX, os.path.join(TEST_IMG, 'test_'))
+test_files = os.listdir(args.in_dir)
+
+test_dataset = XRayDataset(test_files, args.in_dir)
 
 model = ESPCN(2)
 
