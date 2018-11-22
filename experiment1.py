@@ -51,7 +51,6 @@ def cuda(x):
 args = parse_args()
 
 image_files = os.listdir(args.image_dir)
-target_files = os.listdir(args.target_dir)
 
 train_split, valid_split = train_test_split(image_files,
                                             test_size=args.valid_portion)
@@ -79,8 +78,10 @@ class Train(TrackedTraining):
         return torch.sqrt(loss)
 
 
-train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
-valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
+train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
+                            chan1=False)
+valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
+                            chan1=False)
 
 model = ESPCN(2)
 

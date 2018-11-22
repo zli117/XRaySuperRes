@@ -5,10 +5,10 @@ from defines import *
 from util.XRayDataSet import XRayDataset
 
 train_dataset = XRayDataset(TRAIN_IDX, os.path.join(TRAIN_IMG, 'train_'),
-                            os.path.join(TRAIN_TARGET, 'train_'), chan4=True)
+                            os.path.join(TRAIN_TARGET, 'train_'), chan1=False)
 
 test_dataset = XRayDataset(TEST_IDX, os.path.join(TEST_IMG, 'test_'),
-                           chan4=True)
+                           chan1=False)
 
 train_loader = DataLoader(train_dataset, num_workers=5)
 test_loader = DataLoader(test_dataset, num_workers=5)

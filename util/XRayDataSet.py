@@ -11,12 +11,12 @@ from toolbox.states import State, Trackable
 
 class XRayDataset(Dataset, Trackable):
     def __init__(self, file_names, img_dir, target_dir=None,
-                 transform=None, chan4=False, down_sample_target=False):
+                 transform=None, chan1=True, down_sample_target=False):
         self.file_names = State(file_names)
         self.img_dir = img_dir
         self.target_dir = target_dir
         self.transform = transform
-        self.chan4 = chan4
+        self.chan1 = chan1
         self.down_sample_target = down_sample_target
 
     def __len__(self):
@@ -39,7 +39,8 @@ class XRayDataset(Dataset, Trackable):
             image = to_tensor(image)
         else:
             image = torch.Tensor(image / 65536)
-        if not self.chan4:
+            image = torch.unsqueeze(image, 0)
+        if self.chan1:
             image = torch.unsqueeze(image[0], 0)
         result = [('image', image), ('file_name', file_name)]
         if self.target_dir is not None:
