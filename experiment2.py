@@ -34,8 +34,7 @@ def parse_args():
                         help='which device to run on')
     parser.add_argument('-k', '--k_folds', type=int,
                         help='k folds of validation')
-    parser.add_argument('-a', '--down_sample', action='store_true', type=bool,
-                        default=False,
+    parser.add_argument('-a', '--down_sample', action='store_true',
                         help='Down sampling the target to get input')
 
     if len(sys.argv) == 1:
