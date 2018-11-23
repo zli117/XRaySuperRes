@@ -100,8 +100,10 @@ class TrainDenoise(TrackedTraining):
         return sr_out, residual
 
     def parse_valid_batch(self, batch):
-        self.curr_val_input, residual = self.parse_train_batch(batch)
-        return self.curr_val_input, residual
+        image = cuda(batch['image'])
+        target = cuda(batch['target'])
+        self.curr_val_input = self.sr_model(image)
+        return self.curr_val_input, target
 
     def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
@@ -139,7 +141,7 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
-    train = TrainDenoise(espcn, dncnn, train_dataset, valid_split, Adam,
+    train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs)
