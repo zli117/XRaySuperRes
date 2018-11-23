@@ -64,6 +64,7 @@ class TrainDenoise(TrackedTraining):
         self.sr_model = sr_model
         self.sr_model.eval()
         self.mse_loss = nn.MSELoss()
+        self.curr_val_input = None
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -72,9 +73,17 @@ class TrainDenoise(TrackedTraining):
         residual = sr_out - target
         return sr_out, residual
 
+    def parse_valid_batch(self, batch):
+        self.curr_val_input, residual = self.parse_train_batch(batch)
+        return self.curr_val_input, residual
+
     def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
+
+    def valid_loss_fn(self, output, target):
+        output = self.curr_val_input - output
+        return self.train_loss_fn(output, target)
 
 
 train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
