@@ -53,8 +53,11 @@ class TrackedTraining(Trackable):
     def parse_valid_batch(self, batch):
         return self.parse_train_batch(batch)
 
-    def loss_fn(self, output, target):
+    def train_loss_fn(self, output, target):
         return torch.Tensor(0.0)
+
+    def valid_loss_fn(self, output, target):
+        return self.train_loss_fn(output, target)
 
     def validate(self, data_loader):
         total_data = 0
@@ -65,7 +68,7 @@ class TrackedTraining(Trackable):
                 ipt, target = self.parse_valid_batch(batch)
                 output = self.model(ipt)
                 batch_size = output.shape[0]
-                loss = self.loss_fn(output, target)
+                loss = self.valid_loss_fn(output, target)
                 total_loss += loss * batch_size
                 total_data += batch_size
         return total_loss / total_data
@@ -98,7 +101,7 @@ class TrackedTraining(Trackable):
                 for _, batch in enumerate(train_loader):
                     ipt, target = self.parse_train_batch(batch)
                     output = self.model(ipt)
-                    loss = self.loss_fn(output, target)
+                    loss = self.train_loss_fn(output, target)
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()

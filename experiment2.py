@@ -70,7 +70,7 @@ class Train(TrackedTraining):
         image, target = self.parse_train_batch(batch)
         return image, target * 255
 
-    def loss_fn(self, output, target):
+    def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
 

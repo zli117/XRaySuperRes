@@ -72,7 +72,7 @@ class TrainDenoise(TrackedTraining):
         residual = sr_out - target
         return sr_out, residual
 
-    def loss_fn(self, output, target):
+    def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
 
@@ -87,7 +87,7 @@ inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-5}
+optimizer_config = {'lr': 5e-6}
 
 dncnn = DnCNN(1)
 

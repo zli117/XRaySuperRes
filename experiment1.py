@@ -69,7 +69,7 @@ class Train(TrackedTraining):
         target = cuda(batch['target'])
         return image, target
 
-    def loss_fn(self, output, target):
+    def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
 
