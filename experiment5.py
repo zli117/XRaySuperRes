@@ -104,7 +104,7 @@ class TrainDenoise(TrackedTraining):
 
     def valid_loss_fn(self, output, target):
         output = self.curr_val_input - output
-        return self.train_loss_fn(output, target)
+        return self.train_loss_fn(output, target) * 255
 
 
 train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
