@@ -97,7 +97,8 @@ with torch.cuda.device_ctx_manager(args.device):
     train = TrainDenoise(sr_model, dncnn, train_dataset, valid_dataset, Adam,
                          args.save_prefix, args.save_prefix,
                          optimizer_config, train_loader_config,
-                         inference_loader_config, epochs=args.epochs)
+                         inference_loader_config, epochs=args.epochs,
+                         save_optimizer=False)
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)
