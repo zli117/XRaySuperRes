@@ -7,9 +7,9 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
+from model.combined import CombinedNetworkDenoiseAfter
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
-from model.combined import CombinedNetworkDenoiseAfter
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -139,9 +139,10 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
-    train = TrainDenoise(dncnn, train_dataset, valid_split, Adam, save_pfx,
-                         save_pfx, optimizer_config, train_loader_config,
-                         inference_loader_config, epochs=args.epochs)
+    train = TrainDenoise(espcn, dncnn, train_dataset, valid_split, Adam,
+                         save_pfx, save_pfx, optimizer_config,
+                         train_loader_config, inference_loader_config,
+                         epochs=args.epochs)
     dncnn = train.train()
 
     print('======== Training Combined ========')
@@ -152,4 +153,3 @@ with torch.cuda.device_ctx_manager(args.device):
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.combined_epochs)
     combined = train.train()
-
