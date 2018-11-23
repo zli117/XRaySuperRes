@@ -76,6 +76,7 @@ class TrackableMeta(type):
                     if ignore_missing:
                         print('abort loading')
                         return
+                    continue
                 value = state_dict[attr_name].load(value)
                 self.__dict__[attr_name] = value
             self.restored = True
