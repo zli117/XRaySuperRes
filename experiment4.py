@@ -98,7 +98,7 @@ optimizer_config = {'lr': 1e-5}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    espcn_args = {'upscale_factor': 1}
+    espcn_args = {'upscale_factor': 2}
     dncnn_args = {'channels': 1}
     model = CombinedNetworkDenoiseAfter(ESPCN, DnCNN, espcn_args, dncnn_args,
                                         args.up_sample_path, args.denoise_path)
