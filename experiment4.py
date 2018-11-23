@@ -95,7 +95,7 @@ inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
-optimizer_config = {'lr': 1e-6}
+optimizer_config = {'lr': 1e-5}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
