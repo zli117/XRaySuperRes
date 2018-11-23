@@ -23,11 +23,12 @@ def parse_args():
                         help='train batch size')
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
-    parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-p', '--save_model_prefix',
-                        help='prefix for model saving files')
-    parser.add_argument('-f', '--save_state_prefix',
-                        help='prefix for saving trainer state')
+    parser.add_argument('-e', '--epochs', type=int,
+                        help='number of epochs for upsample and denoise')
+    parser.add_argument('-y', '--combined_epochs', type=int,
+                        help='epochs for training combined model')
+    parser.add_argument('-p', '--save_dir',
+                        help='dir for saving states')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -98,10 +99,9 @@ optimizer_config = {'lr': 1e-6}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    espcn_args = {'upscale_factor': 2}
-    dncnn_args = {'channels': 1}
-    model = CombinedNetworkDenoiseAfter(ESPCN, DnCNN, espcn_args, dncnn_args,
-                                        args.up_sample_path, args.denoise_path)
+    espcn = ESPCN(2)
+    dnncc = DnCNN(1)
+    model = CombinedNetworkDenoiseAfter(espcn, dnncc)
 
     train = Train(model, train_dataset, valid_dataset, Adam,
                   args.save_model_prefix, args.save_state_prefix,
