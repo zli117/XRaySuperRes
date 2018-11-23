@@ -29,19 +29,12 @@ def parse_args():
                         help='epochs for training combined model')
     parser.add_argument('-p', '--save_pfx',
                         help='prefix for saving states')
-    parser.add_argument('-r', '--restore_state_path',
-                        help='restore the previous trained state and starting '
-                             'from there')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
                         help='target image dir')
-    parser.add_argument('-u', '--up_sample_path', default=None,
-                        help='path for trained up sampling model')
-    parser.add_argument('-n', '--denoise_path', default=None,
-                        help='path for denoise model')
 
     if len(sys.argv) == 1:
         parser.print_help()
