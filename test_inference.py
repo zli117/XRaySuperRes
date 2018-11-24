@@ -20,8 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Experiment 1')
     parser.add_argument('-b', '--batch_size', type=int, default=18,
                         help='test batch size')
-    parser.add_argument('-c', '--combine_state_path',
-                        help='saved state for combined model')
+    parser.add_argument('-f', '--model_path',
+                        help='path for saved model')
     parser.add_argument('-i', '--in_dir', default=TEST_IMG, help='input dir')
     parser.add_argument('-o', '--out_dir', help='output dir')
     parser.add_argument('-d', '--device', default=0, type=int,
@@ -75,7 +75,7 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
 with torch.cuda.device_ctx_manager(args.device):
     print('On Device:', torch.cuda.get_device_name(args.device))
     espcn = ESPCN(2)
-    dncnn = DnCNN(1)
-    combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
-    load_model(args.combine_state_path, combined)
-    test(combined, test_loader, args.out_dir)
+    # dncnn = DnCNN(1)
+    # combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
+    load_model(args.model_path, espcn)
+    test(espcn, test_loader, args.out_dir)
