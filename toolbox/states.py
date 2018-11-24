@@ -129,6 +129,7 @@ class Trackable(State):
             value = self._state_dict[attr_name].load(value)
             self.__dict__[attr_name] = value
         self._restored = True
+        return self
 
     def __setattr__(self, attr_name, value):
         if issubclass(value.__class__, State):

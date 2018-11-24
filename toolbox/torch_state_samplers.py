@@ -11,6 +11,7 @@ else:
 class TrackedRandomSampler(Trackable, RandomSampler):
     def __init__(self, *args, **kwargs):
         super().__init__()
+        RandomSampler.__init__(self, *args, **kwargs)
 
         self.curr_iter = None
 
@@ -18,7 +19,6 @@ class TrackedRandomSampler(Trackable, RandomSampler):
             return list(self.curr_iter)
 
         self.left_over = State([], dump_fn=dump_fn)
-        RandomSampler.__init__(self, *args, **kwargs)
 
     def __iter__(self):
         if len(self.left_over) > 0:
