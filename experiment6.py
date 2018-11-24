@@ -63,46 +63,6 @@ print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
 
-class TrainUpSample(TrackedTraining):
-    def __init__(self, denoise_model, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
-        self.denoise_model = denoise_model
-        self.denoise_model.eval()
-
-    def parse_train_batch(self, batch):
-        image = cuda(batch['image'])
-        denoised = self.denoise_model(image)
-        target = cuda(batch['target'])
-        return denoised, target
-
-    def train_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
-
-    def valid_loss_fn(self, output, target):
-        loss = self.train_loss_fn(output, target)
-        return loss * 255
-
-
-class TrainCombined(TrackedTraining):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
-
-    def parse_train_batch(self, batch):
-        image = cuda(batch['image'])
-        target = cuda(batch['target'])
-        return image, target
-
-    def train_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
-
-    def valid_loss_fn(self, output, target):
-        return self.train_loss_fn(output, target) * 255
-
-
 class TrainDenoise(TrackedTraining):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -122,6 +82,45 @@ class TrainDenoise(TrackedTraining):
     def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
+
+
+class TrainUpSample(TrackedTraining):
+    def __init__(self, denoise_model, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mse_loss = nn.MSELoss()
+        self.denoise_model = denoise_model
+        self.denoise_model.eval()
+
+    def parse_train_batch(self, batch):
+        image = cuda(batch['image'])
+        denoised = image - self.denoise_model(image)
+        target = cuda(batch['target'])
+        return denoised, target
+
+    def train_loss_fn(self, output, target):
+        loss = self.mse_loss(output, target)
+        return torch.sqrt(loss)
+
+    def valid_loss_fn(self, output, target):
+        return self.train_loss_fn(output, target) * 255
+
+
+class TrainCombined(TrackedTraining):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.mse_loss = nn.MSELoss()
+
+    def parse_train_batch(self, batch):
+        image = cuda(batch['image'])
+        target = cuda(batch['target'])
+        return image, target
+
+    def train_loss_fn(self, output, target):
+        loss = self.mse_loss(output, target)
+        return torch.sqrt(loss)
+
+    def valid_loss_fn(self, output, target):
+        return self.train_loss_fn(output, target) * 255
 
 
 train_loader_config = {'num_workers': 8,
