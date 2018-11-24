@@ -111,7 +111,7 @@ with torch.cuda.device_ctx_manager(args.device):
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)
-        train.load_state(state_dict)
+        train.load(state_dict)
         del state_dict
 
     trained_model = train.train()

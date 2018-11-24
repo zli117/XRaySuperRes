@@ -10,7 +10,6 @@ from defines import *
 from model.combined import CombinedNetworkDenoiseAfter
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
-from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
 
@@ -111,8 +110,7 @@ train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
 valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
 
 train_loader_config = {'num_workers': 8,
-                       'batch_size': args.train_batch_size,
-                       'sampler': TrackedRandomSampler(train_dataset)}
+                       'batch_size': args.train_batch_size}
 inference_loader_config = {'num_workers': 10,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
@@ -125,8 +123,6 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 1e-5}
     espcn = ESPCN(2)
     save_pfx = args.save_pfx + 'espcn'
-    sampler = TrackedRandomSampler(train_dataset)
-    train_loader_config['sampler'] = sampler
     train = Train(espcn, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
@@ -136,8 +132,6 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 7e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
-    sampler = TrackedRandomSampler(train_dataset)
-    train_loader_config['sampler'] = sampler
     train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
@@ -148,8 +142,6 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 1e-5}
     combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
     save_pfx = args.save_pfx + 'combined'
-    sampler = TrackedRandomSampler(train_dataset)
-    train_loader_config['sampler'] = sampler
     train = Train(combined, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.combined_epochs)
