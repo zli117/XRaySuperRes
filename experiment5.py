@@ -30,6 +30,12 @@ def parse_args():
                         help='prefix for saving states')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
+    parser.add_argument('-s', '--sr_state_path',
+                        help='saved state for sr model')
+    parser.add_argument('-n', '--denoise_state_path',
+                        help='saved state for denoise model')
+    parser.add_argument('-c', '--combine_state_path',
+                        help='saved state for combined model')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
@@ -117,7 +123,6 @@ inference_loader_config = {'num_workers': 10,
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    print('Warning: No save on interrupt')
     print('======== Training ESPCN ========')
 
     optimizer_config = {'lr': 1e-5}
@@ -126,23 +131,35 @@ with torch.cuda.device_ctx_manager(args.device):
     train = Train(espcn, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
+    if args.sr_state_path is not None:
+        state_dict = torch.load(args.sr_state_path)
+        train.load(state_dict)
+        del state_dict
     espcn = train.train()
 
     print('======== Training DnCNN ========')
-    optimizer_config = {'lr': 7e-6}
+    optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
     train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs)
+    if args.denoise_state_path is not None:
+        state_dict = torch.load(args.denoise_state_path)
+        train.load(state_dict)
+        del state_dict
     dncnn = train.train()
 
     print('======== Training Combined ========')
-    optimizer_config = {'lr': 1e-5}
+    optimizer_config = {'lr': 3e-6}
     combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
     save_pfx = args.save_pfx + 'combined'
     train = Train(combined, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.combined_epochs)
+    if args.combine_state_path is not None:
+        state_dict = torch.load(args.combine_state_path)
+        train.load(state_dict)
+        del state_dict
     combined = train.train()
