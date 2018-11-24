@@ -120,20 +120,24 @@ inference_loader_config = {'num_workers': 10,
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
     print('Warning: No save on interrupt')
-
     print('======== Training ESPCN ========')
+
     optimizer_config = {'lr': 1e-5}
     espcn = ESPCN(2)
     save_pfx = args.save_pfx + 'espcn'
+    sampler = TrackedRandomSampler(train_dataset)
+    train_loader_config['sampler'] = sampler
     train = Train(espcn, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
     espcn = train.train()
 
     print('======== Training DnCNN ========')
-    optimizer_config = {'lr': 5e-6}
+    optimizer_config = {'lr': 7e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
+    sampler = TrackedRandomSampler(train_dataset)
+    train_loader_config['sampler'] = sampler
     train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
@@ -144,6 +148,8 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 1e-5}
     combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
     save_pfx = args.save_pfx + 'combined'
+    sampler = TrackedRandomSampler(train_dataset)
+    train_loader_config['sampler'] = sampler
     train = Train(combined, train_dataset, valid_dataset, Adam,
                   save_pfx, save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.combined_epochs)
