@@ -10,6 +10,8 @@ else:
 
 class TrackedRandomSampler(Trackable, RandomSampler):
     def __init__(self, *args, **kwargs):
+        super().__init__()
+
         self.curr_iter = None
 
         def dump_fn(_):

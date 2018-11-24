@@ -12,6 +12,7 @@ from toolbox.states import State, Trackable
 class XRayDataset(Dataset, Trackable):
     def __init__(self, file_names, img_dir, target_dir=None,
                  transform=None, chan1=True, down_sample_target=False):
+        super().__init__()
         self.file_names = State(file_names)
         self.img_dir = img_dir
         self.target_dir = target_dir

@@ -25,6 +25,7 @@ class TrackedTraining(Trackable):
                  state_save_path_prefix, optimizer_config: dict,
                  train_loader_config: dict, inference_loader_config: dict,
                  epochs=1, gpu=True, progress_bar_size=20, save_optimizer=True):
+        super().__init__()
         self.model = TorchState(model)
         self.optimizer_cls = optimizer_cls
         optimizer = optimizer_cls(
