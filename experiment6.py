@@ -74,11 +74,6 @@ class TrainDenoise(TrackedTraining):
         residual = image - target
         return image, residual
 
-    def parse_valid_batch(self, batch):
-        image = cuda(batch['image'])
-        target = cuda(batch['down_sample'])
-        return image, target
-
     def train_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
         return torch.sqrt(loss)
