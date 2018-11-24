@@ -138,7 +138,7 @@ with torch.cuda.device_ctx_manager(args.device):
     espcn = train.train()
 
     print('======== Training DnCNN ========')
-    optimizer_config = {'lr': 5e-6}
+    optimizer_config = {'lr': 3e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_pfx + 'dncnn'
     train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
@@ -152,7 +152,7 @@ with torch.cuda.device_ctx_manager(args.device):
     dncnn = train.train()
 
     print('======== Training Combined ========')
-    optimizer_config = {'lr': 3e-6}
+    optimizer_config = {'lr': 1e-6}
     combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
     save_pfx = args.save_pfx + 'combined'
     train = Train(combined, train_dataset, valid_dataset, Adam,
