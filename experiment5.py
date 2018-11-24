@@ -135,6 +135,8 @@ with torch.cuda.device_ctx_manager(args.device):
         state_dict = torch.load(args.sr_state_path)
         train.load(state_dict)
         del state_dict
+        train_dataset = train.train_dataset
+        valid_dataset = train.valid_dataset
     espcn = train.train()
 
     print('======== Training DnCNN ========')
@@ -149,6 +151,8 @@ with torch.cuda.device_ctx_manager(args.device):
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)
         del state_dict
+        train_dataset = train.train_dataset
+        valid_dataset = train.valid_dataset
     dncnn = train.train()
 
     print('======== Training Combined ========')
