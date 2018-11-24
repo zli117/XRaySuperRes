@@ -138,7 +138,7 @@ with torch.cuda.device_ctx_manager(args.device):
     train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
-                         epochs=args.epochs)
+                         epochs=args.epochs, save_optimizer=False)
     if args.denoise_state_path is not None:
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)
@@ -157,7 +157,7 @@ with torch.cuda.device_ctx_manager(args.device):
     train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
                           save_pfx, save_pfx, optimizer_config,
                           train_loader_config, inference_loader_config,
-                          epochs=args.epochs)
+                          epochs=args.epochs, save_optimizer=False)
     if args.sr_state_path is not None:
         state_dict = torch.load(args.sr_state_path)
         train.load(state_dict)
@@ -167,13 +167,13 @@ with torch.cuda.device_ctx_manager(args.device):
     espcn = train.train()
 
     print('======== Training Combined ========')
-    optimizer_config = {'lr': 1e-6}
+    optimizer_config = {'lr': 3e-6}
     combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
     save_pfx = args.save_pfx + 'combined'
     train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
                           save_pfx, save_pfx, optimizer_config,
                           train_loader_config, inference_loader_config,
-                          epochs=args.combined_epochs)
+                          epochs=args.combined_epochs, save_optimizer=False)
     if args.combine_state_path is not None:
         state_dict = torch.load(args.combine_state_path)
         train.load(state_dict)
