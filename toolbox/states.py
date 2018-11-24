@@ -48,6 +48,7 @@ class TorchState(State):
 class TrackableMeta(type):
     """
     Metaclass for registering objects.
+    WARNING: NOT USED
     """
 
     def __new__(cls, cls_name, bases, attr):
@@ -55,7 +56,7 @@ class TrackableMeta(type):
 
         def set_attr(self, attr_name, value):
             if issubclass(value.__class__, State):
-                state_dict[attr_name] = value
+                attr['_state_dict'][attr_name] = value
                 value = value.attrib
             object.__setattr__(self, attr_name, value)
 
@@ -88,23 +89,52 @@ class TrackableMeta(type):
         return super().__new__(cls, cls_name, bases, attr)
 
 
-class Trackable(State, metaclass=TrackableMeta):
+class Trackable(State):
     """
     The Trackable base class. If you want to automatically save the state of the
     attributes, you should subclass this class. For each tracked state, wrap it
     with a State object when initialized in __init__.
     """
 
+    def __init__(self):
+        super().__init__(None)
+        self._state_dict = {}
+        self._restored = False
+
     @property
     def attrib(self):
         return self
 
-    def dump(self, curr_val):
-        return curr_val.save_state()
+    @property
+    def restored(self):
+        return self._restored
 
-    def load(self, dumped_val):
-        self.load_state(dumped_val)
-        return self
+    def save_state(self, save_path):
+        dumped = self.dump(self)
+        torch.save(dumped, save_path)
+
+    def dump(self, curr_val):
+        attrs = self.__dict__
+        out_dict = {}
+        for attr_name, state_obj in self._state_dict.items():
+            value = state_obj.dump(attrs[attr_name])
+            out_dict[attr_name] = value
+        return out_dict
+
+    def load(self, in_dict):
+        for attr_name, value in in_dict.items():
+            if not (attr_name in self._state_dict):
+                print('attribute %s is not part of the object' % attr_name)
+                continue
+            value = self._state_dict[attr_name].load(value)
+            self.__dict__[attr_name] = value
+        self._restored = True
+
+    def __setattr__(self, attr_name, value):
+        if issubclass(value.__class__, State):
+            self._state_dict[attr_name] = value
+            value = value.attrib
+        object.__setattr__(self, attr_name, value)
 
 
 def save_on_interrupt(save_path=None, exception_handling=None):
