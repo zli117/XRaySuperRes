@@ -8,6 +8,8 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from defines import *
+from model.combined import CombinedNetworkDenoiseAfter
+from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.progress_bar import ProgressBar
 from toolbox.train import load_model
@@ -18,8 +20,8 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Experiment 1')
     parser.add_argument('-b', '--batch_size', type=int, default=18,
                         help='test batch size')
-    parser.add_argument('-f', '--saved_model_file',
-                        help='file name for model used for submission')
+    parser.add_argument('-c', '--combine_state_path',
+                        help='saved state for combined model')
     parser.add_argument('-i', '--in_dir', default=TEST_IMG, help='input dir')
     parser.add_argument('-o', '--out_dir', help='output dir')
     parser.add_argument('-d', '--device', default=0, type=int,
@@ -43,8 +45,6 @@ def cuda(x):
 test_files = os.listdir(args.in_dir)
 
 test_dataset = XRayDataset(test_files, args.in_dir)
-
-model = ESPCN(2)
 
 test_loader = DataLoader(test_dataset, num_workers=8,
                          batch_size=args.batch_size, shuffle=False)
@@ -74,5 +74,8 @@ def test(model: nn.Module, data_loader: DataLoader, save_path: str):
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On Device:', torch.cuda.get_device_name(args.device))
-    load_model(args.saved_model_file, model)
-    test(model, test_loader, args.out_dir)
+    espcn = ESPCN(2)
+    dncnn = DnCNN(1)
+    combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
+    load_model(args.combine_state_path, combined)
+    test(combined, test_loader, args.out_dir)
