@@ -27,13 +27,6 @@ class XRayDataset(Dataset, Trackable):
         file_name = self.file_names[item]
         to_tensor = ToTensor()
 
-        if self.down_sample_target:
-            target = imread(os.path.join(self.target_dir, file_name))
-            image = imresize(target, 0.5)
-            target = torch.unsqueeze(to_tensor(target)[0], 0)
-            image = torch.unsqueeze(to_tensor(image)[0], 0)
-            return {'image': image, 'file_name': file_name, 'target': target}
-
         # Only take the first channel. All channels are the same (gray scale)
         image = imread(os.path.join(self.img_dir, file_name))
         if len(image.shape) == 3:
@@ -46,6 +39,10 @@ class XRayDataset(Dataset, Trackable):
         result = [('image', image), ('file_name', file_name)]
         if self.target_dir is not None:
             target = imread(os.path.join(self.target_dir, file_name))
+            if self.down_sample_target:
+                down_sample = imresize(target, 0.5)
+                down_sample = torch.unsqueeze(to_tensor(down_sample)[0], 0)
+                result.append(('down_sample', down_sample))
             target = torch.unsqueeze(to_tensor(target)[0], 0)
             result.append(('target', target))
         if self.transform is not None:
