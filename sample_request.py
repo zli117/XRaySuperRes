@@ -30,7 +30,7 @@ for image in images:
 payload = {"netid": args.netid, "token": args.token}
 res = requests.post(args.server, files=files, data=payload)
 print(res.text)
-with open(args.history_csv, 'r+') as h:
+with open(args.history_csv, 'w+') as h:
     history_lines = h.readlines()
     if len(history_lines) == 0:
         h.write('Time, Result, Comment\n')
