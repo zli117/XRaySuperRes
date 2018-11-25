@@ -2,21 +2,9 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 
+from toolbox.misc import save_model
+from toolbox.progress_bar import ProgressBar
 from toolbox.states import Trackable, TorchState, State, save_on_interrupt
-from .progress_bar import ProgressBar
-
-
-def save_model(model: nn.Module, file_path, epoch, seed, step=None):
-    torch.save({'model': model.state_dict(), 'epoch': epoch, 'seed': seed,
-                'step': step}, file_path)
-
-
-def load_model(file_path, model: nn.Module):
-    obj = torch.load(file_path)
-    model_state = obj['model']
-    model.load_state_dict(model_state)
-    del model_state
-    return model
 
 
 class TrackedTraining(Trackable):

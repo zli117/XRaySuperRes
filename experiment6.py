@@ -10,8 +10,10 @@ from defines import *
 from model.combined import CombinedNetworkDenoiseBefore
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
+from toolbox.misc import cuda
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
+from util.test import test
 
 
 def parse_args():
@@ -40,6 +42,10 @@ def parse_args():
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
                         help='target image dir')
+    parser.add_argument('-w', '--test_in', default=TEST_IMG,
+                        help='test input dir')
+    parser.add_argument('-o', '--output_dir', required=True,
+                        help='output dir for test')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -47,10 +53,6 @@ def parse_args():
 
     arg = parser.parse_args()
     return arg
-
-
-def cuda(x):
-    return x.cuda() if torch.cuda.is_available() else x
 
 
 args = parse_args()
@@ -179,3 +181,5 @@ with torch.cuda.device_ctx_manager(args.device):
         train.load(state_dict)
         del state_dict
     combined = train.train()
+
+    test(combined, args.test_in, args.output_dir, args.valid_batch_size)

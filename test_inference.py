@@ -8,11 +8,9 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from defines import *
-from model.combined import CombinedNetworkDenoiseAfter
-from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.progress_bar import ProgressBar
-from toolbox.train import load_model
+from toolbox.misc import load_model
 from util.XRayDataSet import XRayDataset
 
 
