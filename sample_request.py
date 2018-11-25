@@ -29,11 +29,11 @@ for image in images:
 
 payload = {"netid": args.netid, "token": args.token}
 res = requests.post(args.server, files=files, data=payload)
-with open(args.history_csv, 'r') as h:
+print(res.text)
+with open(args.history_csv, 'r+') as h:
     history_lines = h.readlines()
     if len(history_lines) == 0:
         h.write('Time, Result, Comment\n')
     now = datetime.datetime.now()
     h.write(
         '%s, %s, %s' % (now.strftime("%Y-%m-%d %H:%M"), res.text, args.comment))
-print(res.text)
