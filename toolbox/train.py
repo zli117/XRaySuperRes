@@ -87,10 +87,12 @@ class TrackedTraining(Trackable):
                 total_steps = self.curr_steps + len(train_loader)
                 progress_bar = ProgressBar(self.progress_bar_size,
                                            ' loss: %.06f, batch: %d, epoch: %d')
+                losses = []
                 for _, batch in enumerate(train_loader):
                     ipt, target = self.parse_train_batch(batch)
                     output = self.model(ipt)
                     loss = self.train_loss_fn(output, target)
+                    losses.append(float(loss))
                     self.optimizer.zero_grad()
                     loss.backward()
                     self.optimizer.step()
@@ -98,6 +100,7 @@ class TrackedTraining(Trackable):
                         self.curr_steps / total_steps * 100,
                         loss, self.curr_steps, self.curr_epochs)
                     self.curr_steps += 1
+                print(' Average train loss:', sum(losses) / len(losses))
                 self.curr_epochs += 1
                 self.curr_steps = 0
 
