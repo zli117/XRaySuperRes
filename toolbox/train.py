@@ -113,7 +113,7 @@ class TrackedTraining(Trackable):
                     save_path='%s_%d.state' % (
                         self.state_save_path, self.curr_epochs))
                 validate_loss = self.validate(valid_loader)
-                print('\nValidation loss: %f' % validate_loss)
+                print('Validation loss: %f' % validate_loss)
 
             return self.model
 
