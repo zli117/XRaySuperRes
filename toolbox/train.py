@@ -100,7 +100,7 @@ class TrackedTraining(Trackable):
                         self.curr_steps / total_steps * 100,
                         loss, self.curr_steps, self.curr_epochs)
                     self.curr_steps += 1
-                print(' Average train loss:', sum(losses) / len(losses))
+                print('\nAverage train loss: %.06f' % sum(losses) / len(losses))
                 self.curr_epochs += 1
                 self.curr_steps = 0
 
