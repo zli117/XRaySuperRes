@@ -34,23 +34,20 @@ class TrackedKFold(Trackable):
     def test(self, test_idx):
         pass
 
+    @save_on_interrupt(lambda self: self.state_save_path + 'interrupt.state')
     def run(self):
-        @save_on_interrupt(self.state_save_path + 'interrupt.state')
-        def _run(self):
-            k_fold = KFold(self.k_folds, random_state=self.k_fold_seed,
-                           shuffle=self.shuffle)
-            dummy_x = np.arange(self.data_length).reshape(-1, 1)
-            dummy_y = np.arange(self.data_length)
-            for i, train_test in enumerate(k_fold.split(dummy_x, dummy_y)):
-                if i < self.fold_idx:
-                    continue
-                if not self.restored:
-                    self.train_obj = self.get_train_obj(train_test[0])
-                print('Fold:', self.fold_idx)
-                self.train_obj.train()
-                test_result = self.test(train_test[1])
-                self.results.append(test_result)
-                print('Fold %d test result: %s' % (self.fold_idx, test_result))
-                self.fold_idx += 1
-
-        _run(self)
+        k_fold = KFold(self.k_folds, random_state=self.k_fold_seed,
+                       shuffle=self.shuffle)
+        dummy_x = np.arange(self.data_length).reshape(-1, 1)
+        dummy_y = np.arange(self.data_length)
+        for i, train_test in enumerate(k_fold.split(dummy_x, dummy_y)):
+            if i < self.fold_idx:
+                continue
+            if not self.restored:
+                self.train_obj = self.get_train_obj(train_test[0])
+            print('Fold:', self.fold_idx)
+            self.train_obj.train()
+            test_result = self.test(train_test[1])
+            self.results.append(test_result)
+            print('Fold %d test result: %s' % (self.fold_idx, test_result))
+            self.fold_idx += 1

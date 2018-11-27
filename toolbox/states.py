@@ -138,12 +138,12 @@ class Trackable(State):
         object.__setattr__(self, attr_name, value)
 
 
-def save_on_interrupt(save_path=None, exception_handling=None):
+def save_on_interrupt(save_path_lambda: callable, exception_handling=None):
     """
     The save on interrupt decorator. For any (member) function decorated, it
     will capture SIG_INT and save the state.
     Args:
-        save_path: The path for saving the state
+        save_path_lambda: Receives an instance of self, returns the save path
         exception_handling: A function with only parameter self. Called when
         signal is received.
 
@@ -153,6 +153,7 @@ def save_on_interrupt(save_path=None, exception_handling=None):
     def decorator(func):
         def wrapper(self, *args, **kwargs):
             process_name = current_process().name
+            save_path = save_path_lambda(self)
 
             def handler(sig, frame):
                 if current_process().name == process_name:
