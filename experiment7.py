@@ -97,9 +97,8 @@ with torch.cuda.device_ctx_manager(args.device):
     optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1, tanh_out=True, built_in_residual=True)
     discriminator = Discriminator()
-    save_pfx = args.save_dir + 'dncnn'
     train = TrainDenoise(discriminator, dncnn, train_dataset, valid_dataset,
-                         Adam, save_pfx, optimizer_config,
+                         Adam, args.save_dir, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs, save_optimizer=False)
     if args.denoise_state_path is not None:
