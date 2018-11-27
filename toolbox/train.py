@@ -111,7 +111,7 @@ class TrackedTraining(Trackable):
                                   **self.inference_loader_config)
 
         while self.curr_epochs < self.epochs:
-            self.one_epoch(train_loader, valid_loader)
+            self.one_epoch(train_loader)
             validate_loss = self.validate(valid_loader)
             print('Validation loss: %f' % validate_loss)
 
