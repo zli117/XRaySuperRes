@@ -3,8 +3,8 @@ from torch import nn
 
 class Discriminator(nn.Module):
     def __init__(self):
-        ndf = 64
         super(Discriminator, self).__init__()
+        ndf = 64
         self.main = nn.Sequential(
             # input is (nc) x 64 x 64
             nn.Conv2d(1, ndf, 4, 2, 1, bias=False),

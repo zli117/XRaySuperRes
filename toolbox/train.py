@@ -214,4 +214,14 @@ class TrackedTrainingGAN(TrackedTraining):
                                                '%d.state' % self.curr_epochs))
 
     def train(self):
+        if torch.cuda.is_available() and self.gpu:
+            self.d_model.cuda()
+
+            # Manually moving optimizer state to GPU
+            # https://github.com/pytorch/pytorch/issues/2830#issuecomment-336194949
+            for state in self.d_optimizer.state.values():
+                for k, v in state.items():
+                    if isinstance(v, torch.Tensor):
+                        state[k] = v.cuda()
+            torch.cuda.empty_cache()
         return super().train(), self.d_model
