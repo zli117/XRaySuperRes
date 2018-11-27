@@ -90,7 +90,8 @@ class TrackedTraining(Trackable):
         self.save_state(save_path=os.path.join(self.save_dir,
                                                '%d.state' % self.curr_epochs))
 
-    @save_on_interrupt(lambda self: self.state_save_path + 'interrupt.state')
+    @save_on_interrupt(
+        lambda self: os.path.join(self.save_dir, 'interrupt.state'))
     def train(self):
         if torch.cuda.is_available() and self.gpu:
             self.model.cuda()
