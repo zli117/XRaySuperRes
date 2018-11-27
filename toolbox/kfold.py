@@ -8,10 +8,10 @@ from toolbox.train import TrackedTraining
 
 
 class TrackedKFold(Trackable):
-    def __init__(self, state_save_path, model, k_folds, data_length,
+    def __init__(self, state_save_dir, model, k_folds, data_length,
                  groups=None, shuffle=True):
         super().__init__()
-        self.state_save_path = state_save_path
+        self.state_save_dir = state_save_dir
         # Won't save model twice
         self.model = model
         self.data_length = State(data_length)

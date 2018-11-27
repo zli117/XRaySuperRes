@@ -23,8 +23,8 @@ def parse_args():
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-s', '--save_prefix',
-                        help='prefix for saving model and state')
+    parser.add_argument('-s', '--save_dir',
+                        help='dir for saving model and state')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -104,8 +104,7 @@ with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
     sr_model = cuda(load_model(args.sr_model, ESPCN(2)))
     train = TrainDenoise(sr_model, dncnn, train_dataset, valid_dataset, Adam,
-                         args.save_prefix, args.save_prefix,
-                         optimizer_config, train_loader_config,
+                         args.save_dir, optimizer_config, train_loader_config,
                          inference_loader_config, epochs=args.epochs,
                          save_optimizer=False)
 

@@ -28,8 +28,8 @@ def parse_args():
                         help='number of epochs for upsample and denoise')
     parser.add_argument('-y', '--combined_epochs', type=int,
                         help='epochs for training combined model')
-    parser.add_argument('-p', '--save_pfx',
-                        help='prefix for saving states')
+    parser.add_argument('-p', '--save_dir',
+                        help='dir for saving states')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
     parser.add_argument('-s', '--sr_state_path',
@@ -136,7 +136,7 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1)
-    save_pfx = args.save_pfx + 'dncnn'
+    save_pfx = args.save_dir + 'dncnn'
     train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
                          save_pfx, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
@@ -155,7 +155,7 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training ESPCN ========')
     optimizer_config = {'lr': 1e-5}
     espcn = ESPCN(2)
-    save_pfx = args.save_pfx + 'espcn'
+    save_pfx = args.save_dir + 'espcn'
     train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
                           save_pfx, save_pfx, optimizer_config,
                           train_loader_config, inference_loader_config,
@@ -171,7 +171,7 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training Combined ========')
     optimizer_config = {'lr': 3e-6}
     combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-    save_pfx = args.save_pfx + 'combined'
+    save_pfx = args.save_dir + 'combined'
     train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
                           save_pfx, save_pfx, optimizer_config,
                           train_loader_config, inference_loader_config,

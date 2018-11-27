@@ -28,8 +28,8 @@ def parse_args():
                         help='number of epochs for upsample and denoise')
     parser.add_argument('-y', '--combined_epochs', type=int,
                         help='epochs for training combined model')
-    parser.add_argument('-p', '--save_pfx',
-                        help='prefix for saving states')
+    parser.add_argument('-p', '--save_dir',
+                        help='dir for saving states')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
     parser.add_argument('-s', '--sr_state_path',
@@ -129,9 +129,9 @@ with torch.cuda.device_ctx_manager(args.device):
 
     optimizer_config = {'lr': 1e-5}
     espcn = ESPCN(2)
-    save_pfx = args.save_pfx + 'espcn'
+    save_pfx = args.save_dir + 'espcn'
     train = Train(espcn, train_dataset, valid_dataset, Adam,
-                  save_pfx, save_pfx, optimizer_config, train_loader_config,
+                  save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs,
                   save_optimizer=False)
     if args.sr_state_path is not None:
@@ -145,9 +145,9 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training DnCNN ========')
     optimizer_config = {'lr': 3e-6}
     dncnn = DnCNN(1)
-    save_pfx = args.save_pfx + 'dncnn'
+    save_pfx = args.save_dir + 'dncnn'
     train = TrainDenoise(espcn, dncnn, train_dataset, valid_dataset, Adam,
-                         save_pfx, save_pfx, optimizer_config,
+                         save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs, save_optimizer=False)
     if args.denoise_state_path is not None:
@@ -161,9 +161,9 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training Combined ========')
     optimizer_config = {'lr': 1e-6}
     combined = CombinedNetworkDenoiseAfter(espcn, dncnn)
-    save_pfx = args.save_pfx + 'combined'
+    save_pfx = args.save_dir + 'combined'
     train = Train(combined, train_dataset, valid_dataset, Adam,
-                  save_pfx, save_pfx, optimizer_config, train_loader_config,
+                  save_pfx, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.combined_epochs,
                   save_optimizer=False)
     if args.combine_state_path is not None:

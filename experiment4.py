@@ -27,8 +27,8 @@ def parse_args():
                         help='number of epochs for upsample and denoise')
     parser.add_argument('-y', '--combined_epochs', type=int,
                         help='epochs for training combined model')
-    parser.add_argument('-p', '--save_pfx',
-                        help='prefix for saving states')
+    parser.add_argument('-p', '--save_dir',
+                        help='dir for saving states')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -104,8 +104,7 @@ with torch.cuda.device_ctx_manager(args.device):
     combined = CombinedNetworkDenoiseAfter(espcn, dnncc)
 
     train = Train(combined, train_dataset, valid_dataset, Adam,
-                  args.save_pfx, args.save_pfx,
-                  optimizer_config, train_loader_config,
+                  args.save_dir, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
 
     if args.restore_state_path is not None:

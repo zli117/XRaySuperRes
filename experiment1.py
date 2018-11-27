@@ -22,10 +22,8 @@ def parse_args():
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-p', '--save_model_prefix',
-                        help='prefix for model saving files')
-    parser.add_argument('-f', '--save_state_prefix',
-                        help='prefix for saving trainer state')
+    parser.add_argument('-f', '--save_dir',
+                        help='dir for saving check points')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -91,8 +89,7 @@ optimizer_config = {'lr': 1e-5}
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
     train = Train(model, train_dataset, valid_dataset, Adam,
-                  args.save_model_prefix, args.save_state_prefix,
-                  optimizer_config, train_loader_config,
+                  args.save_dir, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
 
     if args.restore_state_path is not None:

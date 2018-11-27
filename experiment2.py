@@ -25,8 +25,8 @@ def parse_args():
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int, help='number of epochs')
-    parser.add_argument('-f', '--save_prefix',
-                        help='prefix for saving trainer state and model')
+    parser.add_argument('-f', '--save_dir',
+                        help='dir for saving trainer state and model')
     parser.add_argument('-r', '--restore_state_path',
                         help='restore the previous trained state and starting '
                              'from there')
@@ -100,7 +100,7 @@ class KFold(TrackedKFold):
         train_loader_config = {'num_workers': 8,
                                'batch_size': args.train_batch_size,
                                'sampler': TrackedRandomSampler(train_dataset)}
-        save_path_pfx = '%s%d' % (self.state_save_path, self.fold_idx)
+        save_path_pfx = '%s%d' % (self.state_save_dir, self.fold_idx)
         train_obj = Train(self.model, train_dataset, valid_dataset, Adam,
                           save_path_pfx, save_path_pfx,
                           optimizer_config, train_loader_config,
@@ -123,7 +123,7 @@ optimizer_config = {'lr': 1e-5}  # , 'momentum': 0.9, 'weight_decay': 1e-6}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    k_fold = KFold(args.save_prefix, model, args.k_folds, len(TRAIN_IDX))
+    k_fold = KFold(args.save_dir, model, args.k_folds, len(TRAIN_IDX))
 
     if args.restore_state_path is not None:
         state_dict = torch.load(args.restore_state_path)
