@@ -7,11 +7,10 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
-from model.combined import CombinedNetworkDenoiseBefore
+from model.discriminator import Discriminator
 from model.dncnn import DnCNN
-from model.espcn import ESPCN
 from toolbox.misc import cuda
-from toolbox.train import TrackedTraining
+from toolbox.train import TrackedTrainingGAN
 from util.XRayDataSet import XRayDataset
 from util.test import test
 
@@ -65,7 +64,7 @@ print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
 
-class TrainDenoise(TrackedTraining):
+class TrainDenoise(TrackedTrainingGAN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mse_loss = nn.MSELoss()
@@ -73,51 +72,12 @@ class TrainDenoise(TrackedTraining):
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
         target = cuda(batch['down_sample'])
-        residual = image - target
-        return image, residual
-
-    def train_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
-
-
-class TrainUpSample(TrackedTraining):
-    def __init__(self, denoise_model, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
-        self.denoise_model = denoise_model
-        self.denoise_model.eval()
-
-    def parse_train_batch(self, batch):
-        image = cuda(batch['image'])
-        denoised = image - self.denoise_model(image)
-        target = cuda(batch['target'])
-        return denoised, target
-
-    def train_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
-
-    def valid_loss_fn(self, output, target):
-        return self.train_loss_fn(output, target) * 255
-
-
-class TrainCombined(TrackedTraining):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
-
-    def parse_train_batch(self, batch):
-        image = cuda(batch['image'])
-        target = cuda(batch['target'])
         return image, target
 
     def train_loss_fn(self, output, target):
+        output = (output + 1) / 2
         loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
-
-    def valid_loss_fn(self, output, target):
-        return self.train_loss_fn(output, target) * 255
+        return loss
 
 
 train_loader_config = {'num_workers': 8,
@@ -135,51 +95,17 @@ with torch.cuda.device_ctx_manager(args.device):
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
     optimizer_config = {'lr': 5e-6}
-    dncnn = DnCNN(1)
+    dncnn = DnCNN(1, tanh_out=True, built_in_residual=True)
+    discriminator = Discriminator()
     save_pfx = args.save_dir + 'dncnn'
-    train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
-                         save_pfx, optimizer_config,
+    train = TrainDenoise(discriminator, dncnn, train_dataset, valid_dataset,
+                         Adam, save_pfx, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs, save_optimizer=False)
     if args.denoise_state_path is not None:
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)
         del state_dict
-        train_split = train.train_dataset.file_names
-        valid_split = train.valid_dataset.file_names
-    dncnn = train.train()
+    dncnn, discriminator = train.train()
 
-    train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
-    valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
-
-    print('======== Training ESPCN ========')
-    optimizer_config = {'lr': 1e-5}
-    espcn = ESPCN(2)
-    save_pfx = args.save_dir + 'espcn'
-    train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
-                          save_pfx, optimizer_config,
-                          train_loader_config, inference_loader_config,
-                          epochs=args.epochs, save_optimizer=False)
-    if args.sr_state_path is not None:
-        state_dict = torch.load(args.sr_state_path)
-        train.load(state_dict)
-        del state_dict
-        train_dataset = train.train_dataset
-        valid_dataset = train.valid_dataset
-    espcn = train.train()
-
-    print('======== Training Combined ========')
-    optimizer_config = {'lr': 3e-6}
-    combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-    save_pfx = args.save_dir + 'combined'
-    train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
-                          save_pfx, optimizer_config,
-                          train_loader_config, inference_loader_config,
-                          epochs=args.combined_epochs, save_optimizer=False)
-    if args.combine_state_path is not None:
-        state_dict = torch.load(args.combine_state_path)
-        train.load(state_dict)
-        del state_dict
-    combined = train.train()
-
-    test(combined, args.test_in, args.output_dir, args.valid_batch_size)
+    test(dncnn, args.test_in, args.output_dir, args.valid_batch_size)
