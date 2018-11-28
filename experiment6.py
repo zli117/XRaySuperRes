@@ -11,6 +11,7 @@ from model.combined import CombinedNetworkDenoiseBefore
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.misc import cuda
+from toolbox.timer import Timer
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
 from util.test import test
@@ -128,64 +129,68 @@ inference_loader_config = {'num_workers': 10,
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
+    with Timer():
+        print('======== Training DnCNN ========')
+        train_dataset = XRayDataset(train_split, args.image_dir,
+                                    args.target_dir,
+                                    down_sample_target=True)
+        valid_dataset = XRayDataset(valid_split, args.image_dir,
+                                    args.target_dir,
+                                    down_sample_target=True)
+        optimizer_config = {'lr': 1.5e-5}
+        dncnn = DnCNN(1)
+        save_dir = os.path.join(args.save_dir, 'dncnn')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
+                             save_dir, optimizer_config, train_loader_config,
+                             inference_loader_config,
+                             epochs=args.epochs, save_optimizer=False)
+        if args.denoise_state_path is not None:
+            state_dict = torch.load(args.denoise_state_path)
+            train.load(state_dict)
+            del state_dict
+            train_split = train.train_dataset.file_names
+            valid_split = train.valid_dataset.file_names
+        dncnn = train.train()
 
-    print('======== Training DnCNN ========')
-    train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
-                                down_sample_target=True)
-    valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
-                                down_sample_target=True)
-    optimizer_config = {'lr': 1.5e-5}
-    dncnn = DnCNN(1)
-    save_dir = os.path.join(args.save_dir, 'dncnn')
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
-                         save_dir, optimizer_config,
-                         train_loader_config, inference_loader_config,
-                         epochs=args.epochs, save_optimizer=False)
-    if args.denoise_state_path is not None:
-        state_dict = torch.load(args.denoise_state_path)
-        train.load(state_dict)
-        del state_dict
-        train_split = train.train_dataset.file_names
-        valid_split = train.valid_dataset.file_names
-    dncnn = train.train()
+        train_dataset = XRayDataset(train_split, args.image_dir,
+                                    args.target_dir)
+        valid_dataset = XRayDataset(valid_split, args.image_dir,
+                                    args.target_dir)
 
-    train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
-    valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
+        print('======== Training ESPCN ========')
+        optimizer_config = {'lr': 1.5e-5}
+        espcn = ESPCN(2)
+        save_dir = os.path.join(args.save_dir, 'espcn')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
+                              save_dir, optimizer_config, train_loader_config,
+                              inference_loader_config,
+                              epochs=args.epochs, save_optimizer=False)
+        if args.sr_state_path is not None:
+            state_dict = torch.load(args.sr_state_path)
+            train.load(state_dict)
+            del state_dict
+            train_dataset = train.train_dataset
+            valid_dataset = train.valid_dataset
+        espcn = train.train()
 
-    print('======== Training ESPCN ========')
-    optimizer_config = {'lr': 1.5e-5}
-    espcn = ESPCN(2)
-    save_dir = os.path.join(args.save_dir, 'espcn')
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
-                          save_dir, optimizer_config,
-                          train_loader_config, inference_loader_config,
-                          epochs=args.epochs, save_optimizer=False)
-    if args.sr_state_path is not None:
-        state_dict = torch.load(args.sr_state_path)
-        train.load(state_dict)
-        del state_dict
-        train_dataset = train.train_dataset
-        valid_dataset = train.valid_dataset
-    espcn = train.train()
-
-    print('======== Training Combined ========')
-    optimizer_config = {'lr': 6e-6}
-    combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-    save_dir = os.path.join(args.save_dir, 'combined')
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
-    train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
-                          save_dir, optimizer_config,
-                          train_loader_config, inference_loader_config,
-                          epochs=args.combined_epochs, save_optimizer=False)
-    if args.combine_state_path is not None:
-        state_dict = torch.load(args.combine_state_path)
-        train.load(state_dict)
-        del state_dict
-    combined = train.train()
+        print('======== Training Combined ========')
+        optimizer_config = {'lr': 6e-6}
+        combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
+        save_dir = os.path.join(args.save_dir, 'combined')
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+        train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
+                              save_dir, optimizer_config, train_loader_config,
+                              inference_loader_config,
+                              epochs=args.combined_epochs, save_optimizer=False)
+        if args.combine_state_path is not None:
+            state_dict = torch.load(args.combine_state_path)
+            train.load(state_dict)
+            del state_dict
+        combined = train.train()
 
     test(combined, args.test_in, args.output_dir, args.valid_batch_size)
