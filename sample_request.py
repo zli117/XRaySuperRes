@@ -35,5 +35,5 @@ with open(args.history_csv, 'r+') as h:
     if len(history_lines) == 0:
         h.write('Time, Result, Comment\n')
     now = datetime.datetime.now()
-    h.write(
-        '%s, %s, %s' % (now.strftime("%Y-%m-%d %H:%M"), res.text, args.comment))
+    h.write('%s, %s, %s\n' % (
+        now.strftime("%Y-%m-%d %H:%M"), res.text, args.comment))
