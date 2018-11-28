@@ -134,7 +134,7 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
-    optimizer_config = {'lr': 1.5e-5}
+    optimizer_config = {'lr': 5e-6}
     dncnn = DnCNN(1)
     save_pfx = args.save_dir + 'dncnn'
     train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
@@ -153,7 +153,7 @@ with torch.cuda.device_ctx_manager(args.device):
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
 
     print('======== Training ESPCN ========')
-    optimizer_config = {'lr': 1.5e-5}
+    optimizer_config = {'lr': 1e-5}
     espcn = ESPCN(2)
     save_pfx = args.save_dir + 'espcn'
     train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
@@ -169,7 +169,7 @@ with torch.cuda.device_ctx_manager(args.device):
     espcn = train.train()
 
     print('======== Training Combined ========')
-    optimizer_config = {'lr': 6e-6}
+    optimizer_config = {'lr': 3e-6}
     combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
     save_pfx = args.save_dir + 'combined'
     train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
