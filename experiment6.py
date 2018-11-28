@@ -31,6 +31,8 @@ def parse_args():
                         help='epochs for training combined model')
     parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
+    parser.add_argument('-g', '--save_optimizer', action='save_true',
+                        default=False, help='save optimizer')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
     parser.add_argument('-s', '--sr_state_path',
@@ -145,7 +147,8 @@ with torch.cuda.device_ctx_manager(args.device):
         train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
                              save_dir, optimizer_config, train_loader_config,
                              inference_loader_config,
-                             epochs=args.epochs, save_optimizer=False)
+                             epochs=args.epochs,
+                             save_optimizer=args.save_optimizer)
         if args.denoise_state_path is not None:
             state_dict = torch.load(args.denoise_state_path)
             train.load(state_dict)
@@ -168,7 +171,8 @@ with torch.cuda.device_ctx_manager(args.device):
         train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
-                              epochs=args.epochs, save_optimizer=False)
+                              epochs=args.epochs,
+                              save_optimizer=args.save_optimizer)
         if args.sr_state_path is not None:
             state_dict = torch.load(args.sr_state_path)
             train.load(state_dict)
@@ -186,7 +190,8 @@ with torch.cuda.device_ctx_manager(args.device):
         train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
-                              epochs=args.combined_epochs, save_optimizer=False)
+                              epochs=args.combined_epochs,
+                              save_optimizer=args.save_optimizer)
         if args.combine_state_path is not None:
             state_dict = torch.load(args.combine_state_path)
             train.load(state_dict)
