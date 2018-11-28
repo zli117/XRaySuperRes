@@ -35,6 +35,9 @@ class TrackedTraining(Trackable):
         self.inference_loader_config = State(inference_loader_config)
         self.gpu = gpu
         self.progress_bar_size = State(progress_bar_size)
+        self.valid_loss_history = State([])
+        self.train_loss_history = State([])
+        self.curr_train_loss = State([])
 
     def parse_train_batch(self, batch):
         return torch.Tensor(0.0), torch.Tensor(0.0)
@@ -76,6 +79,7 @@ class TrackedTraining(Trackable):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            self.curr_train_loss.append(float(loss))
             progress_bar.progress(
                 self.curr_steps / total_steps * 100,
                 loss, self.curr_steps, self.curr_epochs)
@@ -83,6 +87,9 @@ class TrackedTraining(Trackable):
         print('\nAverage train loss: %.06f' % (sum(losses) / len(losses)))
         self.curr_epochs += 1
         self.curr_steps = 0
+
+        self.train_loss_history.append(self.curr_train_loss)
+        self.curr_train_loss = []
 
         save_model(self.model,
                    os.path.join(self.save_dir, '%d.model' % self.curr_epochs),
@@ -113,6 +120,7 @@ class TrackedTraining(Trackable):
         while self.curr_epochs < self.epochs:
             self.one_epoch(train_loader)
             validate_loss = self.validate(valid_loader)
+            self.valid_loss_history.append(float(validate_loss))
             print('Validation loss: %f' % validate_loss)
 
         return self.model
