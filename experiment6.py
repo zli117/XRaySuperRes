@@ -136,9 +136,11 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     optimizer_config = {'lr': 1.5e-5}
     dncnn = DnCNN(1)
-    save_pfx = args.save_dir + 'dncnn'
+    save_dir = os.path.join(args.save_dir, 'dncnn')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
-                         save_pfx, optimizer_config,
+                         save_dir, optimizer_config,
                          train_loader_config, inference_loader_config,
                          epochs=args.epochs, save_optimizer=False)
     if args.denoise_state_path is not None:
@@ -155,9 +157,11 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training ESPCN ========')
     optimizer_config = {'lr': 1.5e-5}
     espcn = ESPCN(2)
-    save_pfx = args.save_dir + 'espcn'
+    save_dir = os.path.join(args.save_dir, 'espcn')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
-                          save_pfx, optimizer_config,
+                          save_dir, optimizer_config,
                           train_loader_config, inference_loader_config,
                           epochs=args.epochs, save_optimizer=False)
     if args.sr_state_path is not None:
@@ -171,9 +175,11 @@ with torch.cuda.device_ctx_manager(args.device):
     print('======== Training Combined ========')
     optimizer_config = {'lr': 6e-6}
     combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-    save_pfx = args.save_dir + 'combined'
+    save_dir = os.path.join(args.save_dir, 'combined')
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
-                          save_pfx, optimizer_config,
+                          save_dir, optimizer_config,
                           train_loader_config, inference_loader_config,
                           epochs=args.combined_epochs, save_optimizer=False)
     if args.combine_state_path is not None:
