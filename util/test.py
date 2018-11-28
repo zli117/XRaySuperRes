@@ -29,11 +29,11 @@ def test(model: nn.Module, in_path: str, save_path: str, batch_size: int):
             file_names = batch['file_name']
             output = model(image).cpu().numpy()
             for j, file_name in enumerate(file_names):
-                out_img = np.zeros((128, 128, 4))
+                out_img = np.zeros(output.shape[2:] + (4,))
                 out_img[:, :, 0] = output[j, 0]
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
-                out_img[:, :, 3] = np.ones((128, 128))
+                out_img[:, :, 3] = np.ones(output.shape[2:])
                 cv2.imwrite(os.path.join(save_path, file_name),
                             out_img * 255)
             progress_bar.progress(i / total_steps * 100, i)
