@@ -25,8 +25,10 @@ def parse_args():
                         help='train batch size')
     parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
                         help='validation batch size')
-    parser.add_argument('-e', '--epochs', type=int,
-                        help='number of epochs for upsample and denoise')
+    parser.add_argument('-e', '--epochs_denoise', type=int,
+                        help='number of epochs for denoise')
+    parser.add_argument('-u', '--epochs_upsample', type=int,
+                        help='number of epochs for upsample')
     parser.add_argument('-y', '--combined_epochs', type=int,
                         help='epochs for training combined model')
     parser.add_argument('-p', '--save_dir',
@@ -147,7 +149,7 @@ with torch.cuda.device_ctx_manager(args.device):
         train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
                              save_dir, optimizer_config, train_loader_config,
                              inference_loader_config,
-                             epochs=args.epochs,
+                             epochs=args.epochs_denoise,
                              save_optimizer=args.save_optimizer)
         if args.denoise_state_path is not None:
             state_dict = torch.load(args.denoise_state_path)
@@ -171,7 +173,7 @@ with torch.cuda.device_ctx_manager(args.device):
         train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
-                              epochs=args.epochs,
+                              epochs=args.epochs_upsample,
                               save_optimizer=args.save_optimizer)
         if args.sr_state_path is not None:
             state_dict = torch.load(args.sr_state_path)

@@ -1,4 +1,4 @@
 Time, Result, Comment
 2018-11-25 12:45, 8658.80752100387, Combined denoise before up sampling. 200 combined epochs
 2018-11-26 10:58, 8594.944807086646, Combined denoise before up sampling. 200 combined epochs, 100 separate epoch
-2018-11-28 10:34, 8235.951626996582, Trained denoise before for more epochs
+2018-11-28 10:34, 8235.951626996582, Trained denoise before for more epochs 150 separate, 200 combined
