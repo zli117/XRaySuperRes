@@ -9,8 +9,9 @@ from torch.optim import Adam
 from defines import *
 from model.discriminator import Discriminator
 from model.dncnn import DnCNN
+from model.perceptual_loss import PerceptualLoss
 from toolbox.misc import cuda
-from toolbox.train import TrackedTrainingGAN
+from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
 from util.test import test
 
@@ -45,6 +46,10 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
+    parser.add_argument('-f', '--vgg_pretrained', required=True,
+                        help='pretrained path for vgg11 in perceptual loss')
+    parser.add_argument('-u', '--save_optimizer', action='store_true',
+                        default=False, help='Store optimizer or not')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -64,10 +69,13 @@ print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
 
-class TrainDenoise(TrackedTrainingGAN):
-    def __init__(self, *args, **kwargs):
+class TrainDenoise(TrackedTraining):
+    def __init__(self, perceptual_loss_weight, *args,
+                 perceptual_pretrained_path=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.mse_loss = nn.MSELoss()
+        self.perceptual_loss = PerceptualLoss(perceptual_pretrained_path)
+        self.perceptual_loss_weight = perceptual_loss_weight
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -75,9 +83,13 @@ class TrainDenoise(TrackedTrainingGAN):
         return image, target
 
     def train_loss_fn(self, output, target):
-        output = (output + 1) / 2
+        mse_loss = self.mse_loss(output, target)
+        prcpt_loss = self.perceptual_loss(output, target)
+        return mse_loss + self.perceptual_loss_weight * prcpt_loss
+
+    def valid_loss_fn(self, output, target):
         loss = self.mse_loss(output, target)
-        return loss
+        return torch.sqrt(loss)
 
 
 train_loader_config = {'num_workers': 8,
@@ -94,15 +106,15 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
-    optimizer_config = {'lr': 5e-6}
-    dncnn = DnCNN(1, tanh_out=True, built_in_residual=True)
+    optimizer_config = {'lr': 1.5e-5}
+    dncnn = DnCNN(1, built_in_residual=True)
     discriminator = Discriminator()
     discriminator_loss = nn.BCEWithLogitsLoss()
-    train = TrainDenoise(discriminator, dncnn, train_dataset, valid_dataset,
-                         Adam, args.save_dir, optimizer_config,
+    train = TrainDenoise(args.vgg_pretrained, dncnn, train_dataset,
+                         valid_dataset, Adam, args.save_dir, optimizer_config,
                          train_loader_config, inference_loader_config,
                          discriminator_loss, epochs=args.epochs,
-                         save_optimizer=False)
+                         save_optimizer=args.save_optimizer)
     if args.denoise_state_path is not None:
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)

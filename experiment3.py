@@ -9,8 +9,9 @@ from torch.optim import Adam
 from defines import *
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
+from toolbox.misc import load_model
 from toolbox.torch_state_samplers import TrackedRandomSampler
-from toolbox.train import TrackedTraining, load_model
+from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
 
 
