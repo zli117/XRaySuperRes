@@ -124,4 +124,5 @@ data
 saved/*
 weights/*
 out/*
+pretrained/*
 sample_request.py
