@@ -33,7 +33,7 @@ def parse_args():
                         help='epochs for training combined model')
     parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
-    parser.add_argument('-g', '--save_optimizer', action='save_true',
+    parser.add_argument('-g', '--save_optimizer', action='store_true',
                         default=False, help='save optimizer')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
