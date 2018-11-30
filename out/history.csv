@@ -6,3 +6,4 @@ Time, Result, Comment
 2018-11-30 12:41, 8192.952503991753, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. Then 50 epochs without perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
 2018-11-30 12:44, 9214.082414705637, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
 2018-11-30 12:45, 8192.952503991753, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. Then 50 epochs without perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
+2018-11-30 14:00, 8259.860848575689, Exp6: trained 50 combined epochs, 200 others. No perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
