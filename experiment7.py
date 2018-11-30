@@ -68,7 +68,7 @@ class TrainDenoise(TrackedTraining):
                  perceptual_pretrained_path=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.mse_loss = nn.MSELoss()
-        self.perceptual_loss = PerceptualLoss(perceptual_pretrained_path)
+        self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
         self.perceptual_loss_weight = perceptual_loss_weight
 
     def parse_train_batch(self, batch):
