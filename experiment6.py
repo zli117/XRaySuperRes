@@ -112,7 +112,7 @@ class TrainUpSample(TrackedTraining):
 class TrainCombined(TrackedTraining):
     def __init__(self, perceptual_pretrained_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.mse_loss = nn.MSELoss()
+        self.mse_loss = nn.MSELoss()
         self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
 
     def parse_train_batch(self, batch):
