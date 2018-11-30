@@ -4,3 +4,5 @@ Time, Result, Comment
 2018-11-28 10:34, 8235.951626996582, Trained denoise before for more epochs 150 separate, 200 combined. batch size: 16
 2018-11-29 08:54, 8173.432393958034, Trained exp6 250 epochs for denoising, 150 epochs for other 2
 2018-11-30 12:41, 8192.952503991753, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. Then 50 epochs without perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
+2018-11-30 12:44, 9214.082414705637, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
+2018-11-30 12:45, 8192.952503991753, Exp6: Initially 200 epochs for each stage with 0.5 perceptual loss. Then 50 epochs without perceptual loss. b46493f0d3ad6d062438f614fe4cbca232dfc96b
