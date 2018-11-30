@@ -10,6 +10,7 @@ from defines import *
 from model.combined import CombinedNetworkDenoiseBefore
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
+from model.perceptual_loss import PerceptualLoss
 from toolbox.misc import cuda
 from toolbox.timer import Timer
 from toolbox.train import TrackedTraining
@@ -51,6 +52,7 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
+    parser.add_argument('-j', '--vgg11_path', required=True)
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -108,9 +110,10 @@ class TrainUpSample(TrackedTraining):
 
 
 class TrainCombined(TrackedTraining):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, perceptual_pretrained_path, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
+        # self.mse_loss = nn.MSELoss()
+        self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -118,11 +121,11 @@ class TrainCombined(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
+        return self.perceptual_loss(output, target)
 
     def valid_loss_fn(self, output, target):
-        return self.train_loss_fn(output, target) * 255
+        # return self.train_loss_fn(output, target) * 255
+        return torch.sqrt(self.mse_loss(output, target)) * 255
 
 
 train_loader_config = {'num_workers': 8,
@@ -189,7 +192,8 @@ with torch.cuda.device_ctx_manager(args.device):
         save_dir = os.path.join(args.save_dir, 'combined')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        train = TrainCombined(combined, train_dataset, valid_dataset, Adam,
+        train = TrainCombined(args.vgg11_path, combined, train_dataset,
+                              valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
                               epochs=args.combined_epochs,
