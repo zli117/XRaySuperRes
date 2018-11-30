@@ -26,18 +26,12 @@ def parse_args():
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int,
                         help='number of epochs for upsample and denoise')
-    parser.add_argument('-y', '--combined_epochs', type=int,
-                        help='epochs for training combined model')
     parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
-    parser.add_argument('-s', '--sr_state_path',
-                        help='saved state for sr model')
     parser.add_argument('-n', '--denoise_state_path',
                         help='saved state for denoise model')
-    parser.add_argument('-c', '--combine_state_path',
-                        help='saved state for combined model')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
@@ -110,7 +104,7 @@ with torch.cuda.device_ctx_manager(args.device):
     dncnn = DnCNN(1, built_in_residual=True)
     discriminator = Discriminator()
     discriminator_loss = nn.BCEWithLogitsLoss()
-    train = TrainDenoise(args.vgg_pretrained, dncnn, train_dataset,
+    train = TrainDenoise(0.2, args.vgg_pretrained, dncnn, train_dataset,
                          valid_dataset, Adam, args.save_dir, optimizer_config,
                          train_loader_config, inference_loader_config,
                          discriminator_loss, epochs=args.epochs,
