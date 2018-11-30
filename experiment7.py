@@ -104,10 +104,11 @@ with torch.cuda.device_ctx_manager(args.device):
     dncnn = DnCNN(1, built_in_residual=True)
     discriminator = Discriminator()
     discriminator_loss = nn.BCEWithLogitsLoss()
-    train = TrainDenoise(0.2, args.vgg_pretrained, dncnn, train_dataset,
-                         valid_dataset, Adam, args.save_dir, optimizer_config,
-                         train_loader_config, inference_loader_config,
-                         discriminator_loss, epochs=args.epochs,
+    train = TrainDenoise(0.2, dncnn, train_dataset, valid_dataset, Adam,
+                         args.save_dir, optimizer_config, train_loader_config,
+                         inference_loader_config, discriminator_loss,
+                         perceptual_pretrained_path=args.vgg_pretrained,
+                         epochs=args.epochs,
                          save_optimizer=args.save_optimizer)
     if args.denoise_state_path is not None:
         state_dict = torch.load(args.denoise_state_path)
