@@ -114,6 +114,6 @@ with torch.cuda.device_ctx_manager(args.device):
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)
         del state_dict
-    dncnn, discriminator = train.train()
+    dncnn = train.train()
 
     test(dncnn, args.test_in, args.output_dir, args.valid_batch_size)
