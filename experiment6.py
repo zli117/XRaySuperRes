@@ -53,6 +53,8 @@ def parse_args():
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
     parser.add_argument('-j', '--vgg11_path', required=True)
+    parser.add_argument('-x', '--interpolation', required=True, type=float,
+                        help='interpolation between perceptual and mse')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -63,6 +65,8 @@ def parse_args():
 
 
 args = parse_args()
+
+print('Interpolation:', args.interpolation)
 
 image_files = os.listdir(args.image_dir)
 
@@ -110,10 +114,13 @@ class TrainUpSample(TrackedTraining):
 
 
 class TrainCombined(TrackedTraining):
-    def __init__(self, perceptual_pretrained_path, *args, **kwargs):
+    def __init__(self, perceptual_pretrained_path, interpolation, *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
+        assert 0 <= interpolation <= 1
         self.mse_loss = nn.MSELoss()
         self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
+        self.loss_interpolation = interpolation
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -121,7 +128,10 @@ class TrainCombined(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        return self.perceptual_loss(output, target)
+        mse = self.mse_loss(output, target)
+        perceptual = self.perceptual_loss(output, target)
+        return perceptual * self.loss_interpolation + mse * (
+                1 - self.loss_interpolation)
 
     def valid_loss_fn(self, output, target):
         # return self.train_loss_fn(output, target) * 255
@@ -187,13 +197,13 @@ with torch.cuda.device_ctx_manager(args.device):
         espcn = train.train()
 
         print('======== Training Combined ========')
-        optimizer_config = {'lr': 6e-6}
+        optimizer_config = {'lr': 1e-5}
         combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
         save_dir = os.path.join(args.save_dir, 'combined')
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        train = TrainCombined(args.vgg11_path, combined, train_dataset,
-                              valid_dataset, Adam,
+        train = TrainCombined(args.vgg11_path, args.interpolation, combined,
+                              train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
                               epochs=args.combined_epochs,
