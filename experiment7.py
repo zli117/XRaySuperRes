@@ -97,7 +97,6 @@ inference_loader_config = {'num_workers': 20,
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
 
-    print('======== Training DnCNN ========')
     train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
