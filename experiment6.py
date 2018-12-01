@@ -53,7 +53,11 @@ def parse_args():
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
     parser.add_argument('-j', '--vgg11_path', required=True)
-    parser.add_argument('-x', '--interpolation', required=True, type=float,
+    parser.add_argument('-x', '--interpolation_combined', required=True,
+                        type=float,
+                        help='interpolation between perceptual and mse')
+    parser.add_argument('-z', '--interpolation_dncnn', required=True,
+                        type=float,
                         help='interpolation between perceptual and mse')
 
     if len(sys.argv) == 1:
@@ -154,11 +158,9 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir,
                                     down_sample_target=True)
-        optimizer_config = {'lr': 1.5e-5}
+        optimizer_config = {'lr': 1e-5}
         dncnn = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'dncnn')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
         train = TrainDenoise(dncnn, train_dataset, valid_dataset, Adam,
                              save_dir, optimizer_config, train_loader_config,
                              inference_loader_config,
@@ -181,8 +183,6 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1.5e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
         train = TrainUpSample(dncnn, espcn, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
@@ -197,13 +197,11 @@ with torch.cuda.device_ctx_manager(args.device):
         espcn = train.train()
 
         print('======== Training Combined ========')
-        optimizer_config = {'lr': 1e-5}
+        optimizer_config = {'lr': 5e-6}
         combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
         save_dir = os.path.join(args.save_dir, 'combined')
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        train = TrainCombined(args.vgg11_path, args.interpolation, combined,
-                              train_dataset, valid_dataset, Adam,
+        train = TrainCombined(args.vgg11_path, args.interpolation_combined,
+                              combined, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config,
                               epochs=args.combined_epochs,

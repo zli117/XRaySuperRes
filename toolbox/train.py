@@ -27,6 +27,8 @@ class TrackedTraining(Trackable):
         # Avoid saving sampler twice
         self.train_sampler = train_loader_config.pop('sampler', None)
 
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
         self.save_dir = save_dir
         self.epochs = epochs
         self.curr_epochs = State(0)
