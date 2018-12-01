@@ -7,9 +7,8 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
-from model.discriminator import Discriminator
-from model.dncnn import DnCNN
 from model.perceptual_loss import PerceptualLoss
+from model.redcnn import REDCNN
 from toolbox.misc import cuda
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -44,6 +43,10 @@ def parse_args():
                         help='pretrained path for vgg11 in perceptual loss')
     parser.add_argument('-u', '--save_optimizer', action='store_true',
                         default=False, help='Store optimizer or not')
+    parser.add_argument('-j', '--vgg11_path', required=True)
+    parser.add_argument('-x', '--interpolation', required=True,
+                        type=float,
+                        help='interpolation between perceptual and mse')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -64,12 +67,13 @@ print('valid split size: %d' % len(valid_split))
 
 
 class TrainDenoise(TrackedTraining):
-    def __init__(self, perceptual_loss_weight, *args,
-                 perceptual_pretrained_path=None, **kwargs):
+    def __init__(self, perceptual_pretrained_path, interpolation, *args,
+                 **kwargs):
         super().__init__(*args, **kwargs)
+        assert 0 <= interpolation <= 1
         self.mse_loss = nn.MSELoss()
         self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
-        self.perceptual_loss_weight = perceptual_loss_weight
+        self.loss_interpolation = interpolation
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -77,18 +81,18 @@ class TrainDenoise(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        mse_loss = self.mse_loss(output, target)
-        prcpt_loss = self.perceptual_loss(output, target)
-        return mse_loss + self.perceptual_loss_weight * prcpt_loss
+        mse = self.mse_loss(output, target)
+        perceptual = self.perceptual_loss(output, target)
+        return perceptual * self.loss_interpolation + mse * (
+                1 - self.loss_interpolation)
 
     def valid_loss_fn(self, output, target):
-        loss = self.mse_loss(output, target)
-        return torch.sqrt(loss)
+        return torch.sqrt(self.mse_loss(output, target)) * 255
 
 
-train_loader_config = {'num_workers': 8,
+train_loader_config = {'num_workers': 20,
                        'batch_size': args.train_batch_size}
-inference_loader_config = {'num_workers': 10,
+inference_loader_config = {'num_workers': 20,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
@@ -101,10 +105,9 @@ with torch.cuda.device_ctx_manager(args.device):
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
     optimizer_config = {'lr': 1.5e-5}
-    dncnn = DnCNN(1, built_in_residual=True)
-    discriminator = Discriminator()
-    discriminator_loss = nn.BCEWithLogitsLoss()
-    train = TrainDenoise(0.2, dncnn, train_dataset, valid_dataset, Adam,
+    redcnn = REDCNN()
+    train = TrainDenoise(args.vgg11_path, args.interpolation, redcnn,
+                         train_dataset, valid_dataset, Adam,
                          args.save_dir, optimizer_config, train_loader_config,
                          inference_loader_config,
                          perceptual_pretrained_path=args.vgg_pretrained,
