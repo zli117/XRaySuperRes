@@ -108,7 +108,6 @@ with torch.cuda.device_ctx_manager(args.device):
                          train_dataset, valid_dataset, Adam,
                          args.save_dir, optimizer_config, train_loader_config,
                          inference_loader_config,
-                         perceptual_pretrained_path=args.vgg_pretrained,
                          epochs=args.epochs,
                          save_optimizer=args.save_optimizer)
     if args.denoise_state_path is not None:
