@@ -39,8 +39,6 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
-    parser.add_argument('-f', '--vgg_pretrained', required=True,
-                        help='pretrained path for vgg11 in perceptual loss')
     parser.add_argument('-u', '--save_optimizer', action='store_true',
                         default=False, help='Store optimizer or not')
     parser.add_argument('-j', '--vgg11_path', required=True)
