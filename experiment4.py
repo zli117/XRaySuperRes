@@ -7,12 +7,11 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
-from model.combined import CombinedNetworkDenoiseAfter
-from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
+from util.test import test
 
 
 def parse_args():
@@ -42,6 +41,10 @@ def parse_args():
                         help='path for trained up sampling model')
     parser.add_argument('-n', '--denoise_path', default=None,
                         help='path for denoise model')
+    parser.add_argument('-w', '--test_in', default=TEST_IMG,
+                        help='test input dir')
+    parser.add_argument('-o', '--output_dir', required=True,
+                        help='output dir for test')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -82,16 +85,18 @@ class Train(TrackedTraining):
 
     def valid_loss_fn(self, output, target):
         loss = self.train_loss_fn(output, target)
-        return loss * 255
+        return loss
 
 
-train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
-valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
+train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
+                            down_sample_target=True)
+valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
+                            down_sample_target=True)
 
-train_loader_config = {'num_workers': 8,
+train_loader_config = {'num_workers': 15,
                        'batch_size': args.train_batch_size,
                        'sampler': TrackedRandomSampler(train_dataset)}
-inference_loader_config = {'num_workers': 10,
+inference_loader_config = {'num_workers': 15,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
@@ -100,10 +105,8 @@ optimizer_config = {'lr': 1e-5}
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
     espcn = ESPCN(2)
-    dnncc = DnCNN(1)
-    combined = CombinedNetworkDenoiseAfter(espcn, dnncc)
 
-    train = Train(combined, train_dataset, valid_dataset, Adam,
+    train = Train(espcn, train_dataset, valid_dataset, Adam,
                   args.save_dir, optimizer_config, train_loader_config,
                   inference_loader_config, epochs=args.epochs)
 
@@ -112,4 +115,6 @@ with torch.cuda.device_ctx_manager(args.device):
         train.load(state_dict)
         del state_dict
 
-    trained_model = train.train()
+    espcn = train.train()
+
+    test(espcn, args.test_in, args.output_dir, args.valid_batch_size)
