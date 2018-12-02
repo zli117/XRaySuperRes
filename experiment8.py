@@ -106,7 +106,7 @@ with torch.cuda.device_ctx_manager(args.device):
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
     optimizer_config = {'lr': 1e-5}
     redcnn = REDCNN()
-    redcnn = load_model(args.denoise_pretrained, redcnn)
+    redcnn = cuda(load_model(args.denoise_pretrained, redcnn))
     espcn = ESPCN(2)
     train = TrainUpSample(args.vgg11_path, args.interpolation, redcnn, espcn,
                           train_dataset, valid_dataset, Adam,
