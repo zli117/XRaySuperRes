@@ -9,7 +9,8 @@ from torch.optim import Adam
 from defines import *
 from model.perceptual_loss import PerceptualLoss
 from model.redcnn import REDCNN
-from toolbox.misc import cuda
+from model.espcn import ESPCN
+from toolbox.misc import cuda, load_model
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
 from util.test import test
@@ -29,8 +30,8 @@ def parse_args():
                         help='dir for saving states')
     parser.add_argument('-d', '--device', default=0, type=int,
                         help='which device to run on')
-    parser.add_argument('-n', '--denoise_state_path',
-                        help='saved state for denoise model')
+    parser.add_argument('-n', '--sr_state_path',
+                        help='saved state for sr model')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
@@ -39,6 +40,8 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
+    parser.add_argument('-f', '--denoise_pretrained', required=True,
+                        help='location of pretrained denoise model')
     parser.add_argument('-u', '--save_optimizer', action='store_true',
                         default=False, help='Store optimizer or not')
     parser.add_argument('-j', '--vgg11_path', required=True)
@@ -65,18 +68,20 @@ print('valid split size: %d' % len(valid_split))
 
 
 class TrainDenoise(TrackedTraining):
-    def __init__(self, perceptual_pretrained_path, interpolation, *args,
-                 **kwargs):
+    def __init__(self, perceptual_pretrained_path, interpolation, denoise_model,
+                 *args, **kwargs):
         super().__init__(*args, **kwargs)
         assert 0 <= interpolation <= 1
+        self.denoise_model = denoise_model
+        self.denoise_model.eval()
         self.mse_loss = nn.MSELoss()
         self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
         self.loss_interpolation = interpolation
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
-        target = cuda(batch['down_sample'])
-        return image, target
+        target = cuda(batch['target'])
+        return self.denoise_model(image), target
 
     def train_loss_fn(self, output, target):
         mse = self.mse_loss(output, target)
@@ -97,12 +102,12 @@ inference_loader_config = {'num_workers': 20,
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
 
-    train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir,
-                                down_sample_target=True)
-    valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
-                                down_sample_target=True)
-    optimizer_config = {'lr': 1.5e-5}
+    train_dataset = XRayDataset(train_split, args.image_dir, args.target_dir)
+    valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir)
+    optimizer_config = {'lr': 1e-5}
     redcnn = REDCNN()
+    redcnn = load_model(args.denoise_pretrained, redcnn)
+    espcn = ESPCN(2)
     train = TrainDenoise(args.vgg11_path, args.interpolation, redcnn,
                          train_dataset, valid_dataset, Adam,
                          args.save_dir, optimizer_config, train_loader_config,
@@ -110,9 +115,9 @@ with torch.cuda.device_ctx_manager(args.device):
                          epochs=args.epochs,
                          save_optimizer=args.save_optimizer)
     if args.denoise_state_path is not None:
-        state_dict = torch.load(args.denoise_state_path)
+        state_dict = torch.load(args.sr_state_path)
         train.load(state_dict)
         del state_dict
-    redcnn = train.train()
+    espcn = train.train()
 
-    test(redcnn, args.test_in, args.output_dir, args.valid_batch_size)
+    test(espcn, args.test_in, args.output_dir, args.valid_batch_size)
