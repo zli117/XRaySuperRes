@@ -114,7 +114,7 @@ with torch.cuda.device_ctx_manager(args.device):
                           inference_loader_config,
                           epochs=args.epochs,
                           save_optimizer=args.save_optimizer)
-    if args.denoise_state_path is not None:
+    if args.sr_state_path is not None:
         state_dict = torch.load(args.sr_state_path)
         train.load(state_dict)
         del state_dict
