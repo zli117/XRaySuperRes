@@ -7,9 +7,9 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
+from model.espcn import ESPCN
 from model.perceptual_loss import PerceptualLoss
 from model.redcnn import REDCNN
-from model.espcn import ESPCN
 from toolbox.misc import cuda, load_model
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -67,7 +67,7 @@ print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
 
-class TrainDenoise(TrackedTraining):
+class TrainUpSample(TrackedTraining):
     def __init__(self, perceptual_pretrained_path, interpolation, denoise_model,
                  *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -108,12 +108,12 @@ with torch.cuda.device_ctx_manager(args.device):
     redcnn = REDCNN()
     redcnn = load_model(args.denoise_pretrained, redcnn)
     espcn = ESPCN(2)
-    train = TrainDenoise(args.vgg11_path, args.interpolation, redcnn,
-                         train_dataset, valid_dataset, Adam,
-                         args.save_dir, optimizer_config, train_loader_config,
-                         inference_loader_config,
-                         epochs=args.epochs,
-                         save_optimizer=args.save_optimizer)
+    train = TrainUpSample(args.vgg11_path, args.interpolation, redcnn, espcn,
+                          train_dataset, valid_dataset, Adam,
+                          args.save_dir, optimizer_config, train_loader_config,
+                          inference_loader_config,
+                          epochs=args.epochs,
+                          save_optimizer=args.save_optimizer)
     if args.denoise_state_path is not None:
         state_dict = torch.load(args.sr_state_path)
         train.load(state_dict)
