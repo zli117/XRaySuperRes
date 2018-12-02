@@ -8,6 +8,7 @@ from torch.optim import Adam
 
 from defines import *
 from model.espcn import ESPCN
+from toolbox.timer import Timer
 from toolbox.torch_state_samplers import TrackedRandomSampler
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -96,19 +97,20 @@ inference_loader_config = {'num_workers': 15,
 
 optimizer_config = {'lr': 1e-5}
 
-with torch.cuda.device_ctx_manager(args.device):
-    print('On device:', torch.cuda.get_device_name(args.device))
-    espcn = ESPCN(2)
+with Timer():
+    with torch.cuda.device_ctx_manager(args.device):
+        print('On device:', torch.cuda.get_device_name(args.device))
+        espcn = ESPCN(2)
 
-    train = Train(espcn, train_dataset, valid_dataset, Adam,
-                  args.save_dir, optimizer_config, train_loader_config,
-                  inference_loader_config, epochs=args.epochs)
+        train = Train(espcn, train_dataset, valid_dataset, Adam,
+                      args.save_dir, optimizer_config, train_loader_config,
+                      inference_loader_config, epochs=args.epochs)
 
-    if args.restore_state_path is not None:
-        state_dict = torch.load(args.restore_state_path)
-        train.load(state_dict)
-        del state_dict
+        if args.restore_state_path is not None:
+            state_dict = torch.load(args.restore_state_path)
+            train.load(state_dict)
+            del state_dict
 
-    espcn = train.train()
+        espcn = train.train()
 
-    test(espcn, args.test_in, args.output_dir, args.valid_batch_size)
+        test(espcn, args.test_in, args.output_dir, args.valid_batch_size)
