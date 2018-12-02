@@ -35,10 +35,6 @@ def parse_args():
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
                         help='target image dir')
-    parser.add_argument('-u', '--up_sample_path', default=None,
-                        help='path for trained up sampling model')
-    parser.add_argument('-n', '--denoise_path', default=None,
-                        help='path for denoise model')
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
