@@ -84,7 +84,7 @@ class Train(TrackedTraining):
         return torch.sqrt(loss)
 
     def valid_loss_fn(self, output, target):
-        loss = self.train_loss_fn(output, target)
+        loss = self.train_loss_fn(output, target) * 255
         return loss
 
 
