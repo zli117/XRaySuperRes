@@ -69,7 +69,7 @@ class Train(TrackedTraining):
         super().__init__(*args, **kwargs)
 
     def parse_train_batch(self, batch):
-        image = cuda(batch['image'])
+        image = cuda(batch['down_sample'])
         target = cuda(batch['target'])
         return image, target
 
