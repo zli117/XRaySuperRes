@@ -104,7 +104,7 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
-    optimizer_config = {'lr': 0.001}
+    optimizer_config = {'lr': 3e-5}
     res_unet = ResUNet()
     train = TrainDenoise(args.vgg11_path, args.interpolation, res_unet,
                          train_dataset, valid_dataset, Adam,
