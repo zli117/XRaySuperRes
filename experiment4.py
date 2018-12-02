@@ -24,8 +24,6 @@ def parse_args():
                         help='validation batch size')
     parser.add_argument('-e', '--epochs', type=int,
                         help='number of epochs for upsample and denoise')
-    parser.add_argument('-y', '--combined_epochs', type=int,
-                        help='epochs for training combined model')
     parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
     parser.add_argument('-r', '--restore_state_path',
