@@ -8,7 +8,8 @@ from torch.optim import Adam
 
 from defines import *
 from model.perceptual_loss import PerceptualLoss
-from model.redcnn import REDCNN
+# from model.redcnn import REDCNN
+from model.unet import ResUNet
 from toolbox.misc import cuda
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
@@ -70,6 +71,7 @@ class TrainDenoise(TrackedTraining):
         super().__init__(*args, **kwargs)
         assert 0 <= interpolation <= 1
         self.mse_loss = nn.MSELoss()
+        self.l1_loss = nn.L1Loss()
         self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
         self.loss_interpolation = interpolation
 
@@ -79,13 +81,14 @@ class TrainDenoise(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        perceptual = self.perceptual_loss(output, target)
-        return perceptual * self.loss_interpolation + mse * (
-                1 - self.loss_interpolation)
+        # mse = self.mse_loss(output, target)
+        # perceptual = self.perceptual_loss(output, target)
+        # return perceptual * self.loss_interpolation + mse * (
+        #         1 - self.loss_interpolation)
+        return self.l1_loss(output, target)
 
     def valid_loss_fn(self, output, target):
-        return torch.sqrt(self.mse_loss(output, target)) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 train_loader_config = {'num_workers': 20,
@@ -101,9 +104,9 @@ with torch.cuda.device_ctx_manager(args.device):
                                 down_sample_target=True)
     valid_dataset = XRayDataset(valid_split, args.image_dir, args.target_dir,
                                 down_sample_target=True)
-    optimizer_config = {'lr': 1.5e-5}
-    redcnn = REDCNN()
-    train = TrainDenoise(args.vgg11_path, args.interpolation, redcnn,
+    optimizer_config = {'lr': 0.001}
+    res_unet = ResUNet()
+    train = TrainDenoise(args.vgg11_path, args.interpolation, res_unet,
                          train_dataset, valid_dataset, Adam,
                          args.save_dir, optimizer_config, train_loader_config,
                          inference_loader_config,
@@ -113,6 +116,6 @@ with torch.cuda.device_ctx_manager(args.device):
         state_dict = torch.load(args.denoise_state_path)
         train.load(state_dict)
         del state_dict
-    redcnn = train.train()
+    res_unet = train.train()
 
-    test(redcnn, args.test_in, args.output_dir, args.valid_batch_size)
+    test(res_unet, args.test_in, args.output_dir, args.valid_batch_size)
