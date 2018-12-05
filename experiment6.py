@@ -52,12 +52,11 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', required=True,
                         help='output dir for test')
-    parser.add_argument('-j', '--vgg11_path', required=True)
-    parser.add_argument('-x', '--interpolation_combined', required=True,
-                        type=float,
+    parser.add_argument('-j', '--vgg11_path')
+    parser.add_argument('-x', '--interpolation_combined', type=float,
+                        default=0.0,
                         help='interpolation between perceptual and mse')
-    parser.add_argument('-z', '--interpolation_dncnn', required=True,
-                        type=float,
+    parser.add_argument('-z', '--interpolation_dncnn', type=float, default=0.0,
                         help='interpolation between perceptual and mse')
 
     if len(sys.argv) == 1:
@@ -129,7 +128,11 @@ class TrainCombined(TrackedTraining):
         assert 0 <= interpolation <= 1
         self.loss = loss
         self.mse_loss = nn.MSELoss()
-        self.perceptual_loss = cuda(PerceptualLoss(perceptual_pretrained_path))
+        if perceptual_pretrained_path is not None:
+            self.perceptual_loss = cuda(
+                PerceptualLoss(perceptual_pretrained_path))
+        else:
+            self.perceptual_loss = None
         self.loss_interpolation = interpolation
 
     def parse_train_batch(self, batch):
@@ -139,23 +142,26 @@ class TrainCombined(TrackedTraining):
 
     def train_loss_fn(self, output, target):
         loss = self.loss(output, target)
-        perceptual = self.perceptual_loss(output, target)
-        return perceptual * self.loss_interpolation + loss * (
-                1 - self.loss_interpolation)
+        if self.perceptual_loss is not None:
+            perceptual = self.perceptual_loss(output, target)
+            return perceptual * self.loss_interpolation + loss * (
+                    1 - self.loss_interpolation)
+        else:
+            return loss
 
     def valid_loss_fn(self, output, target):
         return torch.sqrt(self.mse_loss(output, target)) * 255
 
 
-train_loader_config = {'num_workers': 8,
+train_loader_config = {'num_workers': 40,
                        'batch_size': args.train_batch_size}
-inference_loader_config = {'num_workers': 10,
+inference_loader_config = {'num_workers': 40,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    smooth_l1 = nn.SmoothL1Loss(reduction='elementwise_mean')
+    loss_fn = nn.MSELoss()
     with Timer():
         print('======== Training DnCNN ========')
         train_dataset = XRayDataset(train_split, args.image_dir,
@@ -167,7 +173,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 5e-5}
         dncnn = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'dncnn')
-        train = TrainDenoise(smooth_l1, dncnn, train_dataset, valid_dataset,
+        train = TrainDenoise(loss_fn, dncnn, train_dataset, valid_dataset,
                              Adam, save_dir, optimizer_config,
                              train_loader_config, inference_loader_config,
                              epochs=args.epochs_denoise,
@@ -189,7 +195,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1.5e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
-        train = TrainUpSample(smooth_l1, dncnn, espcn, train_dataset,
+        train = TrainUpSample(loss_fn, dncnn, espcn, train_dataset,
                               valid_dataset, Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
                               epochs=args.epochs_upsample,
@@ -206,7 +212,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1.5e-5}
         combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
         save_dir = os.path.join(args.save_dir, 'combined')
-        train = TrainCombined(smooth_l1, args.vgg11_path,
+        train = TrainCombined(loss_fn, args.vgg11_path,
                               args.interpolation_combined, combined,
                               train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
