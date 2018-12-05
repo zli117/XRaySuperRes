@@ -70,7 +70,7 @@ def parse_args():
 
 args = parse_args()
 
-print('Interpolation:', args.interpolation)
+print('Interpolation:', args.interpolation_combined)
 
 image_files = os.listdir(args.image_dir)
 
