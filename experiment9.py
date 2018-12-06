@@ -30,7 +30,7 @@ def parse_args():
                         help='number of epochs for upsample')
     parser.add_argument('-y', '--finetune_epochs', type=int, default=1,
                         help='epochs for training finetune model')
-    parser.add_argument('-p', '--save_dir', default="./saved/",
+    parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
     parser.add_argument('-g', '--save_optimizer', action='store_true',
                         default=False, help='save optimizer')
