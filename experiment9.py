@@ -7,32 +7,30 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
-from model.combined import CombinedNetworkDenoiseBefore
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
-from model.perceptual_loss import PerceptualLoss
 from toolbox.misc import cuda
 from toolbox.timer import Timer
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
-from util.test import test
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Experiment 1')
-    parser.add_argument('-v', '--valid_portion', type=float, default=0.1,
+    parser = argparse.ArgumentParser(
+        description='Experiment 7 Independent Fine-tune')
+    parser.add_argument('-v', '--valid_portion', type=float, default=0.2,
                         help='portion of train dataset used for validation')
-    parser.add_argument('-t', '--train_batch_size', type=int, default=128,
+    parser.add_argument('-t', '--train_batch_size', type=int, default=16,
                         help='train batch size')
-    parser.add_argument('-b', '--valid_batch_size', type=int, default=512,
+    parser.add_argument('-b', '--valid_batch_size', type=int, default=16,
                         help='validation batch size')
-    parser.add_argument('-e', '--epochs_denoise', type=int,
+    parser.add_argument('-e', '--epochs_denoise', type=int, default=1,
                         help='number of epochs for denoise')
-    parser.add_argument('-u', '--epochs_upsample', type=int,
+    parser.add_argument('-u', '--epochs_upsample', type=int, default=1,
                         help='number of epochs for upsample')
-    parser.add_argument('-y', '--combined_epochs', type=int,
-                        help='epochs for training combined model')
-    parser.add_argument('-p', '--save_dir',
+    parser.add_argument('-y', '--finetune_epochs', type=int, default=1,
+                        help='epochs for training finetune model')
+    parser.add_argument('-p', '--save_dir', default="./saved/",
                         help='dir for saving states')
     parser.add_argument('-g', '--save_optimizer', action='store_true',
                         default=False, help='save optimizer')
@@ -42,15 +40,15 @@ def parse_args():
                         help='saved state for sr model')
     parser.add_argument('-n', '--denoise_state_path',
                         help='saved state for denoise model')
-    parser.add_argument('-c', '--combine_state_path',
-                        help='saved state for combined model')
+    parser.add_argument('-c', '--finetune_state_path',
+                        help='saved state for finetune denoise model')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
                         help='target image dir')
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
-    parser.add_argument('-o', '--output_dir', required=True,
+    parser.add_argument('-o', '--output_dir', default="./out/",
                         help='output dir for test')
     parser.add_argument('-j', '--vgg11_path')
     parser.add_argument('-x', '--interpolation_combined', type=float,
@@ -121,41 +119,35 @@ class TrainUpSample(TrackedTraining):
         return torch.sqrt(mse) * 255
 
 
-class TrainCombined(TrackedTraining):
-    def __init__(self, loss, perceptual_pretrained_path, interpolation, *args,
-                 **kwargs):
+class TrainFinetuneDenoise(TrackedTraining):
+    def __init__(self, loss, sr_model, denoise_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        assert 0 <= interpolation <= 1
         self.loss = loss
         self.mse_loss = nn.MSELoss()
-        if perceptual_pretrained_path is not None:
-            self.perceptual_loss = cuda(
-                PerceptualLoss(perceptual_pretrained_path))
-        else:
-            self.perceptual_loss = None
-        self.loss_interpolation = interpolation
+        self.denoise_model = denoise_model
+        self.sr_model = sr_model
+        self.denoise_model.eval()
+        self.sr_model.eval()
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
+        denoised = image - self.denoise_model(image)
+        enlarged = self.sr_model(denoised)
         target = cuda(batch['target'])
-        return image, target
+        residual = enlarged - target
+        return enlarged, residual
 
     def train_loss_fn(self, output, target):
-        loss = self.loss(output, target)
-        if self.perceptual_loss is not None:
-            perceptual = self.perceptual_loss(output, target)
-            return perceptual * self.loss_interpolation + loss * (
-                    1 - self.loss_interpolation)
-        else:
-            return loss
+        return self.loss(output, target)
 
     def valid_loss_fn(self, output, target):
-        return torch.sqrt(self.mse_loss(output, target)) * 255
+        mse = self.mse_loss(output, target)
+        return torch.sqrt(mse) * 255
 
 
-train_loader_config = {'num_workers': 40,
+train_loader_config = {'num_workers': 16,
                        'batch_size': args.train_batch_size}
-inference_loader_config = {'num_workers': 40,
+inference_loader_config = {'num_workers': 16,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
@@ -186,13 +178,13 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_split = train.valid_dataset.file_names
         dncnn = train.train()
 
+        print('======== Training ESPCN ========')
         train_dataset = XRayDataset(train_split, args.image_dir,
                                     args.target_dir)
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir)
 
-        print('======== Training ESPCN ========')
-        optimizer_config = {'lr': 5e-5}
+        optimizer_config = {'lr': 1.5e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
         train = TrainUpSample(loss_fn, dncnn, espcn, train_dataset,
@@ -208,21 +200,45 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_dataset = train.valid_dataset
         espcn = train.train()
 
-        print('======== Training Combined ========')
-        optimizer_config = {'lr': 2e-5}
-        combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-        save_dir = os.path.join(args.save_dir, 'combined')
-        train = TrainCombined(loss_fn, args.vgg11_path,
-                              args.interpolation_combined, combined,
-                              train_dataset, valid_dataset, Adam,
-                              save_dir, optimizer_config, train_loader_config,
-                              inference_loader_config,
-                              epochs=args.combined_epochs,
-                              save_optimizer=args.save_optimizer)
-        if args.combine_state_path is not None:
-            state_dict = torch.load(args.combine_state_path)
+        print("======== Denoise Finetune ========")
+        train_dataset = XRayDataset(train_split, args.image_dir,
+                                    args.target_dir)
+        valid_dataset = XRayDataset(valid_split, args.image_dir,
+                                    args.target_dir)
+        optimizer_config = {'lr': 1.5e-5}
+        dncnn_finetuned = DnCNN(1)
+        save_dir = os.path.join(args.save_dir, 'finetune')
+        train = TrainFinetuneDenoise(loss_fn, espcn, dncnn, dncnn_finetuned,
+                                     train_dataset,
+                                     valid_dataset, Adam, save_dir,
+                                     optimizer_config,
+                                     train_loader_config,
+                                     inference_loader_config,
+                                     epochs=args.finetune_epochs,
+                                     save_optimizer=args.save_optimizer)
+        if args.finetune_state_path is not None:
+            state_dict = torch.load(args.finetune_state_path)
             train.load(state_dict)
             del state_dict
-        combined = train.train()
+            train_split = train.train_dataset.file_names
+            valid_split = train.valid_dataset.file_names
+        dncnn_finetuned = train.train()
 
-    test(combined, args.test_in, args.output_dir, args.valid_batch_size)
+        # print('======== Training Combined ========')
+        # optimizer_config = {'lr': 1.5e-5}
+        # combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
+        # save_dir = os.path.join(args.save_dir, 'combined')
+        # train = TrainCombined(loss_fn, args.vgg11_path,
+        #                       args.interpolation_combined, combined,
+        #                       train_dataset, valid_dataset, Adam,
+        #                       save_dir, optimizer_config, train_loader_config,
+        #                       inference_loader_config,
+        #                       epochs=args.combined_epochs,
+        #                       save_optimizer=args.save_optimizer)
+        # if args.combine_state_path is not None:
+        #     state_dict = torch.load(args.combine_state_path)
+        #     train.load(state_dict)
+        #     del state_dict
+        # combined = train.train()
+
+    # test(combined, args.test_in, args.output_dir, args.valid_batch_size)
