@@ -7,12 +7,14 @@ from torch import nn
 from torch.optim import Adam
 
 from defines import *
+from model.combined import DenoiseAfterDenoisedUpsample
 from model.dncnn import DnCNN
 from model.espcn import ESPCN
 from toolbox.misc import cuda
 from toolbox.timer import Timer
 from toolbox.train import TrackedTraining
 from util.XRayDataSet import XRayDataset
+from util.test import test
 
 
 def parse_args():
@@ -48,8 +50,7 @@ def parse_args():
                         help='target image dir')
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
-    parser.add_argument('-o', '--output_dir', default="./out/",
-                        help='output dir for test')
+    parser.add_argument('-o', '--output_dir', help='output dir for test')
     parser.add_argument('-j', '--vgg11_path')
     parser.add_argument('-x', '--interpolation_combined', type=float,
                         default=0.0,
@@ -208,21 +209,6 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_split = train.valid_dataset.file_names
         dncnn_finetuned = train.train()
 
-        # print('======== Training Combined ========')
-        # optimizer_config = {'lr': 1.5e-5}
-        # combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
-        # save_dir = os.path.join(args.save_dir, 'combined')
-        # train = TrainCombined(loss_fn, args.vgg11_path,
-        #                       args.interpolation_combined, combined,
-        #                       train_dataset, valid_dataset, Adam,
-        #                       save_dir, optimizer_config, train_loader_config,
-        #                       inference_loader_config,
-        #                       epochs=args.combined_epochs,
-        #                       save_optimizer=args.save_optimizer)
-        # if args.combine_state_path is not None:
-        #     state_dict = torch.load(args.combine_state_path)
-        #     train.load(state_dict)
-        #     del state_dict
-        # combined = train.train()
+    combined = DenoiseAfterDenoisedUpsample(dncnn, espcn, dncnn_finetuned)
 
-    # test(combined, args.test_in, args.output_dir, args.valid_batch_size)
+    test(combined, args.test_in, args.output_dir, args.valid_batch_size)
