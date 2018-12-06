@@ -78,9 +78,8 @@ print('valid split size: %d' % len(valid_split))
 
 
 class TrainDenoise(TrackedTraining):
-    def __init__(self, loss, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
 
     def parse_train_batch(self, batch):
@@ -90,17 +89,12 @@ class TrainDenoise(TrackedTraining):
         return image, residual
 
     def train_loss_fn(self, output, target):
-        return self.loss(output, target)
-
-    def valid_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        return torch.sqrt(mse) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 class TrainUpSample(TrackedTraining):
-    def __init__(self, loss, denoise_model, *args, **kwargs):
+    def __init__(self, denoise_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
         self.denoise_model = denoise_model
         self.denoise_model.eval()
@@ -112,17 +106,12 @@ class TrainUpSample(TrackedTraining):
         return denoised, target
 
     def train_loss_fn(self, output, target):
-        return self.loss(output, target)
-
-    def valid_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        return torch.sqrt(mse) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 class TrainFinetuneDenoise(TrackedTraining):
-    def __init__(self, loss, sr_model, denoise_model, *args, **kwargs):
+    def __init__(self, sr_model, denoise_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
         self.denoise_model = denoise_model
         self.sr_model = sr_model
@@ -138,11 +127,7 @@ class TrainFinetuneDenoise(TrackedTraining):
         return enlarged, residual
 
     def train_loss_fn(self, output, target):
-        return self.loss(output, target)
-
-    def valid_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        return torch.sqrt(mse) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 train_loader_config = {'num_workers': 16,
@@ -153,7 +138,6 @@ inference_loader_config = {'num_workers': 16,
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    loss_fn = nn.MSELoss()
     with Timer():
         print('======== Training DnCNN ========')
         train_dataset = XRayDataset(train_split, args.image_dir,
@@ -165,7 +149,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1e-5}
         dncnn = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'dncnn')
-        train = TrainDenoise(loss_fn, dncnn, train_dataset, valid_dataset,
+        train = TrainDenoise(dncnn, train_dataset, valid_dataset,
                              Adam, save_dir, optimizer_config,
                              train_loader_config, inference_loader_config,
                              epochs=args.epochs_denoise,
@@ -187,7 +171,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1.5e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
-        train = TrainUpSample(loss_fn, dncnn, espcn, train_dataset,
+        train = TrainUpSample(dncnn, espcn, train_dataset,
                               valid_dataset, Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
                               epochs=args.epochs_upsample,
@@ -208,7 +192,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1e-5}
         dncnn_finetuned = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'finetune')
-        train = TrainFinetuneDenoise(loss_fn, espcn, dncnn, dncnn_finetuned,
+        train = TrainFinetuneDenoise(espcn, dncnn, dncnn_finetuned,
                                      train_dataset,
                                      valid_dataset, Adam, save_dir,
                                      optimizer_config,

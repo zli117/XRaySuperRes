@@ -80,9 +80,8 @@ print('valid split size: %d' % len(valid_split))
 
 
 class TrainDenoise(TrackedTraining):
-    def __init__(self, loss, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
 
     def parse_train_batch(self, batch):
@@ -92,17 +91,12 @@ class TrainDenoise(TrackedTraining):
         return image, residual
 
     def train_loss_fn(self, output, target):
-        return self.loss(output, target)
-
-    def valid_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        return torch.sqrt(mse) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 class TrainUpSample(TrackedTraining):
-    def __init__(self, loss, denoise_model, *args, **kwargs):
+    def __init__(self, denoise_model, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
         self.denoise_model = denoise_model
         self.denoise_model.eval()
@@ -114,19 +108,14 @@ class TrainUpSample(TrackedTraining):
         return denoised, target
 
     def train_loss_fn(self, output, target):
-        return self.loss(output, target)
-
-    def valid_loss_fn(self, output, target):
-        mse = self.mse_loss(output, target)
-        return torch.sqrt(mse) * 255
+        return torch.sqrt(self.mse_loss(output, target))
 
 
 class TrainCombined(TrackedTraining):
-    def __init__(self, loss, perceptual_pretrained_path, interpolation, *args,
+    def __init__(self, perceptual_pretrained_path, interpolation, *args,
                  **kwargs):
         super().__init__(*args, **kwargs)
         assert 0 <= interpolation <= 1
-        self.loss = loss
         self.mse_loss = nn.MSELoss()
         if perceptual_pretrained_path is not None:
             self.perceptual_loss = cuda(
@@ -141,7 +130,7 @@ class TrainCombined(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        loss = self.loss(output, target)
+        loss = torch.sqrt(self.mse_loss(output, target))
         if self.perceptual_loss is not None:
             perceptual = self.perceptual_loss(output, target)
             return perceptual * self.loss_interpolation + loss * (
@@ -161,7 +150,6 @@ inference_loader_config = {'num_workers': 40,
 
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    loss_fn = nn.MSELoss()
     with Timer():
         print('======== Training DnCNN ========')
         train_dataset = XRayDataset(train_split, args.image_dir,
@@ -170,10 +158,10 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir,
                                     down_sample_target=True)
-        optimizer_config = {'lr': 1e-5}
+        optimizer_config = {'lr': 5e-5}
         dncnn = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'dncnn')
-        train = TrainDenoise(loss_fn, dncnn, train_dataset, valid_dataset,
+        train = TrainDenoise(dncnn, train_dataset, valid_dataset,
                              Adam, save_dir, optimizer_config,
                              train_loader_config, inference_loader_config,
                              epochs=args.epochs_denoise,
@@ -192,10 +180,10 @@ with torch.cuda.device_ctx_manager(args.device):
                                     args.target_dir)
 
         print('======== Training ESPCN ========')
-        optimizer_config = {'lr': 1.5e-5}
+        optimizer_config = {'lr': 2e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
-        train = TrainUpSample(loss_fn, dncnn, espcn, train_dataset,
+        train = TrainUpSample(dncnn, espcn, train_dataset,
                               valid_dataset, Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
                               epochs=args.epochs_upsample,
@@ -212,7 +200,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 1e-5}
         combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
         save_dir = os.path.join(args.save_dir, 'combined')
-        train = TrainCombined(loss_fn, args.vgg11_path,
+        train = TrainCombined(args.vgg11_path,
                               args.interpolation_combined, combined,
                               train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
