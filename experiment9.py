@@ -146,7 +146,7 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir,
                                     down_sample_target=True)
-        optimizer_config = {'lr': 1e-5}
+        optimizer_config = {'lr': 5e-5}
         dncnn = DnCNN(1)
         save_dir = os.path.join(args.save_dir, 'dncnn')
         train = TrainDenoise(dncnn, train_dataset, valid_dataset,
@@ -168,7 +168,7 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir)
 
-        optimizer_config = {'lr': 1.5e-5}
+        optimizer_config = {'lr': 2e-5}
         espcn = ESPCN(2)
         save_dir = os.path.join(args.save_dir, 'espcn')
         train = TrainUpSample(dncnn, espcn, train_dataset,
