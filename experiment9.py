@@ -51,12 +51,12 @@ def parse_args():
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
     parser.add_argument('-o', '--output_dir', help='output dir for test')
-    parser.add_argument('-j', '--vgg11_path')
-    parser.add_argument('-x', '--interpolation_combined', type=float,
-                        default=0.0,
-                        help='interpolation between perceptual and mse')
     parser.add_argument('-z', '--interpolation_dncnn', type=float, default=0.0,
                         help='interpolation between perceptual and mse')
+    parser.add_argument('-k', '--k_fold_split', help='file for k fold splits',
+                        default=None)
+    parser.add_argument('-j', '--cv_index', type=int,
+                        help='to run validation for which fold')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -67,8 +67,6 @@ def parse_args():
 
 
 args = parse_args()
-
-print('Interpolation:', args.interpolation_combined)
 
 image_files = os.listdir(args.image_dir)
 
