@@ -178,7 +178,7 @@ class TrackedTrainingGAN(TrackedTraining):
             # train discriminator with real
             self.d_model.zero_grad()
             batch_size = real.shape[0]
-            label = cuda(torch.full((batch_size,), real_label))
+            label = cuda(torch.full((batch_size, 1), real_label))
             output = self.d_model(real)
             loss_real = self.discriminator_loss(output, label)
             loss_real.backward()
