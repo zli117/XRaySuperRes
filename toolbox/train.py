@@ -133,7 +133,7 @@ class TrackedTrainingGAN(TrackedTraining):
                  valid_dataset, optimizer_cls, save_dir, optimizer_config: dict,
                  train_loader_config: dict, inference_loader_config: dict,
                  discriminator_loss, epochs=1, gpu=True, progress_bar_size=20,
-                 save_optimizer=True):
+                 save_optimizer=True, discriminator_weight=1.0):
         super().__init__(model, train_dataset, valid_dataset, optimizer_cls,
                          save_dir,
                          optimizer_config, train_loader_config,
@@ -146,6 +146,7 @@ class TrackedTrainingGAN(TrackedTraining):
         self.discriminator_loss = discriminator_loss
         self.d_optimizer = TorchState(
             d_optimizer) if save_optimizer else d_optimizer
+        self.discriminator_weight = discriminator_weight
 
     def train_loss_fn(self, output, target):
         """
@@ -198,7 +199,8 @@ class TrackedTrainingGAN(TrackedTraining):
             label.fill_(real_label)
             output = self.d_model(fake)
             loss_d = self.discriminator_loss(output, label)
-            loss_g = loss_d + self.train_loss_fn(fake, real)
+            loss_g = self.discriminator_weight * loss_d + self.train_loss_fn(
+                fake, real)
             loss_g.backward()
             self.optimizer.step()
             g_losses.append(loss_g)

@@ -16,16 +16,20 @@ def weights_init_normal(m):
 
 
 class FeatureExtractor(nn.Module):
-    def __init__(self):
+    def __init__(self, vgg19_path=None):
         super(FeatureExtractor, self).__init__()
 
-        vgg19_model = vgg19(pretrained=True)
+        vgg19_model = vgg19(pretrained=False)
+        if vgg19_path is not None:
+            vgg19_model.load_state_dict(torch.load(vgg19_path))
 
         # Extracts features at the 11th layer
         self.feature_extractor = nn.Sequential(
             *list(vgg19_model.features.children())[:12])
 
     def forward(self, img):
+        if img.shape[1] == 1:
+            img = torch.cat((img, img, img), dim=1)
         out = self.feature_extractor(img)
         return out
 
