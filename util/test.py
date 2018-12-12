@@ -10,8 +10,11 @@ from toolbox.progress_bar import ProgressBar
 from util.XRayDataSet import XRayDataset
 
 
-def test(model: nn.Module, in_path: str, save_path: str, batch_size: int):
+def test(model: nn.Module, in_path: str, save_dir: str, batch_size: int):
     test_files = os.listdir(in_path)
+
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
 
     test_dataset = XRayDataset(test_files, in_path)
 
@@ -34,6 +37,6 @@ def test(model: nn.Module, in_path: str, save_path: str, batch_size: int):
                 out_img[:, :, 1] = output[j, 0]
                 out_img[:, :, 2] = output[j, 0]
                 out_img[:, :, 3] = np.ones(output.shape[2:])
-                cv2.imwrite(os.path.join(save_path, file_name),
+                cv2.imwrite(os.path.join(save_dir, file_name),
                             out_img * 255)
             progress_bar.progress(i / total_steps * 100, i)
