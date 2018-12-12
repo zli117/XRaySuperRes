@@ -107,7 +107,7 @@ class TrainUpSample(TrackedTrainingGAN):
         self.mse_loss = nn.MSELoss()
         self.denoise_model = denoise_model
         self.denoise_model.eval()
-        self.feature_extractor = feature_extractor
+        self.feature_extractor = cuda(feature_extractor)
         self.feature_extractor.eval()
 
     def parse_train_batch(self, batch):
