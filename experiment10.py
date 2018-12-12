@@ -28,6 +28,8 @@ def parse_args():
                         help='validation batch size')
     parser.add_argument('-e', '--epochs_denoise', type=int, default=1,
                         help='number of epochs for denoise')
+    parser.add_argument('-c', '--epochs_pretrain', type=int, default=1,
+                        help='number of epochs for pretraining generator')
     parser.add_argument('-u', '--epochs_upsample', type=int, default=1,
                         help='number of epochs for upsample')
     parser.add_argument('-p', '--save_dir',
@@ -40,6 +42,8 @@ def parse_args():
                         help='saved state for denoise model')
     parser.add_argument('-s', '--sr_state_path',
                         help='saved state for sr model')
+    parser.add_argument('-m', '--sr_res_state_path',
+                        help='saved state for sr pretrain')
     parser.add_argument('-i', '--image_dir', default=TRAIN_IMG,
                         help='input image dir')
     parser.add_argument('-l', '--target_dir', default=TRAIN_TARGET,
@@ -79,11 +83,22 @@ class TrainDenoise(TrackedTraining):
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
         target = cuda(batch['down_sample'])
-        residual = image - target
-        return image, residual
+        return image, target
 
     def train_loss_fn(self, output, target):
         return torch.sqrt(self.mse_loss(output, target))
+
+
+class PretrainSRGAN(TrainDenoise):
+    def __init__(self, denoise, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.denoise = denoise
+        self.denoise.eval()
+
+    def parse_train_batch(self, batch):
+        image = cuda(batch['image'])
+        target = cuda(batch['target'])
+        return image, target
 
 
 class TrainUpSample(TrackedTrainingGAN):
@@ -128,8 +143,8 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir,
                                     down_sample_target=True)
-        optimizer_config = {'lr': 5e-5}
-        dncnn = DnCNN(1)
+        optimizer_config = {'lr': 1e-4}
+        dncnn = DnCNN(1, built_in_residual=True)
         save_dir = os.path.join(args.save_dir, 'dncnn')
         train = TrainDenoise(dncnn, train_dataset, valid_dataset,
                              Adam, save_dir, optimizer_config,
@@ -144,14 +159,30 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_split = train.valid_dataset.file_names
         dncnn = train.train()
 
-        print('======== Training SRGAN ========')
+        print('======== Pre-train SRGAN ========')
         train_dataset = XRayDataset(train_split, args.image_dir,
                                     args.target_dir)
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir)
-
-        optimizer_config = {'lr': 2e-5}
+        optimizer_config = {'lr': 1e-4}
         generator = GeneratorResNet()
+        save_dir = os.path.join(args.save_dir, 'srres')
+        train = PretrainSRGAN(dncnn, generator, train_dataset, valid_dataset,
+                              Adam, save_dir, optimizer_config,
+                              train_loader_config, inference_loader_config,
+                              epochs=args.epochs_pretrain,
+                              save_optimizer=args.save_optimizer)
+        if args.sr_res_state_path is not None:
+            state_dict = torch.load(args.sr_res_state_path)
+            train.load(state_dict)
+            del state_dict
+            train_dataset = train.train_dataset
+            valid_dataset = train.valid_dataset
+        generator = train.train()
+
+        print('======== Training SRGAN ========')
+
+        optimizer_config = {'lr': 1e-5}
         discriminator = Discriminator()
         feature_extractor = FeatureExtractor(args.vgg19_path)
         save_dir = os.path.join(args.save_dir, 'srgan')
@@ -168,8 +199,8 @@ with torch.cuda.device_ctx_manager(args.device):
             del state_dict
             train_dataset = train.train_dataset
             valid_dataset = train.valid_dataset
-        espcn = train.train()
+        generator, discriminator = train.train()
 
-    combined = CombinedNetworkDenoiseBefore(dncnn, espcn)
+    combined = CombinedNetworkDenoiseBefore(dncnn, generator)
 
     test(combined, args.test_in, args.output_dir, args.valid_batch_size)
