@@ -10,3 +10,4 @@ Time, Result, Comment
 2018-12-06 10:39, 8042.3716850185665, Trained with larger lr for exp6, 200 epochs each. 3a54d4e5c297aeafec522cab754077eab755d4d4
 2018-12-06 11:34, 7948.386416924008, Finetune the result of espcn with another dncnn. Exp9 200 epochs each. e8229de109be48040c28146b15dcb75ce4c07264
 2018-12-07 01:28, 7916.102154516733, Increased lr to 3e-5for finetune. Reduced to 1e-5 after 120 epochs. Trained for 120 epochs. e8229de109be48040c28146b15dcb75ce4c07264
+2018-12-13 16:39, 7985.0003541506485, SR Resnet trained for 50 epochs. valid loss 0.017693. Exp 10. a42ee708248757fdfbc5db445078d0f846db23fc
