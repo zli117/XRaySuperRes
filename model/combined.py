@@ -14,14 +14,18 @@ class CombinedNetworkDenoiseAfter(nn.Module):
 
 
 class CombinedNetworkDenoiseBefore(nn.Module):
-    def __init__(self, denoise_model, upsample_model):
+    def __init__(self, denoise_model, upsample_model,
+                 dncnn_built_in_residual=False):
         super(CombinedNetworkDenoiseBefore, self).__init__()
         self.upsample = upsample_model
         self.denoise = denoise_model
+        self.dncnn_built_in_residual = dncnn_built_in_residual
 
     def forward(self, low_res_noise):
-        residual = self.denoise(low_res_noise)
-        up_sampled = self.upsample(low_res_noise - residual)
+        out = self.denoise(low_res_noise)
+        if not self.dncnn_built_in_residual:
+            out = low_res_noise - out
+        up_sampled = self.upsample(out)
         return up_sampled
 
 
