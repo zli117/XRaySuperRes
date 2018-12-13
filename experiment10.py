@@ -52,6 +52,8 @@ def parse_args():
                         help='test input dir')
     parser.add_argument('-x', '--vgg19_path', help='vgg19 pretrained path')
     parser.add_argument('-o', '--output_dir', help='output dir for test')
+    parser.add_argument('-y', '--denoise_out', required=True,
+                        help='output dir for denoised images')
     parser.add_argument('-k', '--k_fold_split', help='file for k fold splits',
                         default=None)
     parser.add_argument('-j', '--cv_index', type=int,
@@ -90,10 +92,8 @@ class TrainDenoise(TrackedTraining):
 
 
 class PretrainSRGAN(TrainDenoise):
-    def __init__(self, denoise, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.denoise = denoise
-        self.denoise.eval()
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -102,19 +102,16 @@ class PretrainSRGAN(TrainDenoise):
 
 
 class TrainUpSample(TrackedTrainingGAN):
-    def __init__(self, denoise_model, feature_extractor, *args, **kwargs):
+    def __init__(self, feature_extractor, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mse_loss = nn.MSELoss()
-        self.denoise_model = denoise_model
-        self.denoise_model.eval()
         self.feature_extractor = cuda(feature_extractor)
         self.feature_extractor.eval()
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
-        denoised = image - self.denoise_model(image)
         target = cuda(batch['target'])
-        return denoised, target
+        return image, target
 
     def train_loss_fn(self, output, target):
         real_features = self.feature_extractor(target)
@@ -158,16 +155,24 @@ with torch.cuda.device_ctx_manager(args.device):
             train_split = train.train_dataset.file_names
             valid_split = train.valid_dataset.file_names
         dncnn = train.train()
+        test(dncnn, args.image_dir, args.denoise_out, args.valid_batch_size)
 
+    print('Loading denoised from', args.denoise_out)
+    image_files = os.listdir(args.denoise_out)
+
+    train_split, valid_split = train_test_split(image_files,
+                                                test_size=args.valid_portion)
+
+    with Timer():
         print('======== Pre-train SRGAN ========')
-        train_dataset = XRayDataset(train_split, args.image_dir,
+        train_dataset = XRayDataset(train_split, args.denoise_out,
                                     args.target_dir)
-        valid_dataset = XRayDataset(valid_split, args.image_dir,
+        valid_dataset = XRayDataset(valid_split, args.denoise_out,
                                     args.target_dir)
         optimizer_config = {'lr': 1e-4}
         generator = GeneratorResNet()
         save_dir = os.path.join(args.save_dir, 'srres')
-        train = PretrainSRGAN(dncnn, generator, train_dataset, valid_dataset,
+        train = PretrainSRGAN(generator, train_dataset, valid_dataset,
                               Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
                               epochs=args.epochs_pretrain,
@@ -180,13 +185,13 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_dataset = train.valid_dataset
         generator = train.train()
 
+    with Timer():
         print('======== Training SRGAN ========')
-
         optimizer_config = {'lr': 1e-5}
         discriminator = Discriminator()
         feature_extractor = FeatureExtractor(args.vgg19_path)
         save_dir = os.path.join(args.save_dir, 'srgan')
-        train = TrainUpSample(dncnn, feature_extractor, discriminator,
+        train = TrainUpSample(feature_extractor, discriminator,
                               generator, train_dataset, valid_dataset, Adam,
                               save_dir, optimizer_config, train_loader_config,
                               inference_loader_config, nn.BCEWithLogitsLoss(),
