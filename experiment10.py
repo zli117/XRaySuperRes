@@ -67,9 +67,6 @@ def parse_args():
 
 args = parse_args()
 
-print('train split size: %d' % len(train_split))
-print('valid split size: %d' % len(valid_split))
-
 
 class TrainDenoise(TrackedTraining):
     def __init__(self, *args, **kwargs):
