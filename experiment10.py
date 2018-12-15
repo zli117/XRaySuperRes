@@ -54,10 +54,8 @@ def parse_args():
     parser.add_argument('-o', '--output_dir', help='output dir for test')
     parser.add_argument('-y', '--denoise_out', required=True,
                         help='output dir for denoised images')
-    parser.add_argument('-k', '--k_fold_split', help='file for k fold splits',
-                        default=None)
-    parser.add_argument('-j', '--cv_index', type=int,
-                        help='to run validation for which fold')
+    parser.add_argument('-k', '--skip_denoise', default=False,
+                        action='store_true', help='skip the first dncnn')
 
     if len(sys.argv) == 1:
         parser.print_help()
@@ -69,10 +67,6 @@ def parse_args():
 
 args = parse_args()
 
-image_files = os.listdir(args.image_dir)
-
-train_split, valid_split = train_test_split(image_files,
-                                            test_size=args.valid_portion)
 print('train split size: %d' % len(train_split))
 print('valid split size: %d' % len(valid_split))
 
@@ -130,38 +124,44 @@ inference_loader_config = {'num_workers': 20,
                            'batch_size': args.valid_batch_size,
                            'shuffle': False}
 
+image_files = os.listdir(args.image_dir)
+
+train_split, valid_split = train_test_split(image_files,
+                                            test_size=args.valid_portion)
+
 with torch.cuda.device_ctx_manager(args.device):
     print('On device:', torch.cuda.get_device_name(args.device))
-    with Timer():
-        print('======== Training DnCNN ========')
-        train_dataset = XRayDataset(train_split, args.image_dir,
-                                    args.target_dir,
-                                    down_sample_target=True)
-        valid_dataset = XRayDataset(valid_split, args.image_dir,
-                                    args.target_dir,
-                                    down_sample_target=True)
-        optimizer_config = {'lr': 1e-4}
-        dncnn = DnCNN(1, built_in_residual=True)
-        save_dir = os.path.join(args.save_dir, 'dncnn')
-        train = TrainDenoise(dncnn, train_dataset, valid_dataset,
-                             Adam, save_dir, optimizer_config,
-                             train_loader_config, inference_loader_config,
-                             epochs=args.epochs_denoise,
-                             save_optimizer=args.save_optimizer)
-        if args.denoise_state_path is not None:
-            state_dict = torch.load(args.denoise_state_path)
-            train.load(state_dict)
-            del state_dict
-            train_split = train.train_dataset.file_names
-            valid_split = train.valid_dataset.file_names
-        dncnn = train.train()
-        test(dncnn, args.image_dir, args.denoise_out, args.valid_batch_size)
+    if not args.skip_denoise:
+        with Timer():
+            print('======== Training DnCNN ========')
+            train_dataset = XRayDataset(train_split, args.image_dir,
+                                        args.target_dir,
+                                        down_sample_target=True)
+            valid_dataset = XRayDataset(valid_split, args.image_dir,
+                                        args.target_dir,
+                                        down_sample_target=True)
+            optimizer_config = {'lr': 1e-4}
+            dncnn = DnCNN(1, built_in_residual=True)
+            save_dir = os.path.join(args.save_dir, 'dncnn')
+            train = TrainDenoise(dncnn, train_dataset, valid_dataset,
+                                 Adam, save_dir, optimizer_config,
+                                 train_loader_config, inference_loader_config,
+                                 epochs=args.epochs_denoise,
+                                 save_optimizer=args.save_optimizer)
+            if args.denoise_state_path is not None:
+                state_dict = torch.load(args.denoise_state_path)
+                train.load(state_dict)
+                del state_dict
+                train_split = train.train_dataset.file_names
+                valid_split = train.valid_dataset.file_names
+            dncnn = train.train()
+            test(dncnn, args.image_dir, args.denoise_out, args.valid_batch_size)
 
-    print('Loading denoised from', args.denoise_out)
-    image_files = os.listdir(args.denoise_out)
+        print('Loading denoised from', args.denoise_out)
+        image_files = os.listdir(args.denoise_out)
 
-    train_split, valid_split = train_test_split(image_files,
-                                                test_size=args.valid_portion)
+        train_split, valid_split = train_test_split(
+            image_files, test_size=args.valid_portion)
 
     with Timer():
         print('======== Pre-train SRGAN ========')
