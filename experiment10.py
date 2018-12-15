@@ -116,7 +116,7 @@ class TrainUpSample(TrackedTrainingGAN):
     def train_loss_fn(self, output, target):
         real_features = self.feature_extractor(target)
         fake_features = self.feature_extractor(output)
-        content_loss = self.mse_loss(output, target) + 0.006 * self.mse_loss(
+        content_loss = self.mse_loss(output, target) + 2e-6 * self.mse_loss(
             fake_features, real_features)
         return content_loss
 
@@ -187,7 +187,7 @@ with torch.cuda.device_ctx_manager(args.device):
 
     with Timer():
         print('======== Training SRGAN ========')
-        optimizer_config = {'lr': 1e-5}
+        optimizer_config = {'lr': 1e-4}
         discriminator = Discriminator()
         feature_extractor = FeatureExtractor(args.vgg19_path)
         save_dir = os.path.join(args.save_dir, 'srgan')
