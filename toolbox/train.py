@@ -130,19 +130,20 @@ class TrackedTraining(Trackable):
 
 class TrackedTrainingGAN(TrackedTraining):
     def __init__(self, d_model: nn.Module, model: nn.Module, train_dataset,
-                 valid_dataset, optimizer_cls, save_dir, optimizer_config: dict,
+                 valid_dataset, optimizer_cls, save_dir,
+                 d_optimizer_config: dict, g_optimizer_config: dict,
                  train_loader_config: dict, inference_loader_config: dict,
                  discriminator_loss, epochs=1, gpu=True, progress_bar_size=20,
                  save_optimizer=True, discriminator_weight=1.0):
         super().__init__(model, train_dataset, valid_dataset, optimizer_cls,
                          save_dir,
-                         optimizer_config, train_loader_config,
+                         g_optimizer_config, train_loader_config,
                          inference_loader_config, epochs, gpu,
                          progress_bar_size, save_optimizer)
         self.d_model = TorchState(d_model)
         d_optimizer = optimizer_cls(
             filter(lambda p: p.requires_grad, d_model.parameters()),
-            **optimizer_config)
+            **d_optimizer_config)
         self.discriminator_loss = discriminator_loss
         self.d_optimizer = TorchState(
             d_optimizer) if save_optimizer else d_optimizer
@@ -176,26 +177,24 @@ class TrackedTrainingGAN(TrackedTraining):
             g_ipt, real = self.parse_train_batch(batch)
 
             # train discriminator with real
-            self.d_model.zero_grad()
+            self.d_optimizer.zero_grad()
             batch_size = real.shape[0]
             label = cuda(torch.full((batch_size, 1), real_label))
             output = self.d_model(real)
             loss_real = self.discriminator_loss(output, label)
-            loss_real.backward()
 
             # train discriminator with fake
             fake = self.model(g_ipt)
             label.fill_(fake_label)
             output = self.d_model(fake.detach())
             loss_fake = self.discriminator_loss(output, label)
-            loss_fake.backward()
             loss_discriminator = loss_real + loss_fake
+            loss_discriminator.backward()
+            self.d_optimizer.step()
             d_losses.append(loss_discriminator)
 
-            self.d_optimizer.step()
-
             # train generator
-            self.model.zero_grad()
+            self.optimizer.zero_grad()
             label.fill_(real_label)
             output = self.d_model(fake)
             loss_d = self.discriminator_loss(output, label)

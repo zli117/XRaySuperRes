@@ -16,6 +16,8 @@ from toolbox.train import TrackedTrainingGAN, TrackedTraining
 from util.XRayDataSet import XRayDataset
 from util.test import test
 
+torch.backends.cudnn.benchmark = True
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -184,13 +186,15 @@ with torch.cuda.device_ctx_manager(args.device):
 
     with Timer():
         print('======== Training SRGAN ========')
-        optimizer_config = {'lr': 1e-4}
+        g_optimizer_config = {'lr': 1e-4}
+        d_optimizer_config = {'lr': 5e-4}
         discriminator = Discriminator()
         feature_extractor = FeatureExtractor(args.vgg19_path)
         save_dir = os.path.join(args.save_dir, 'srgan')
         train = TrainUpSample(feature_extractor, discriminator,
                               generator, train_dataset, valid_dataset, Adam,
-                              save_dir, optimizer_config, train_loader_config,
+                              save_dir, d_optimizer_config, g_optimizer_config,
+                              train_loader_config,
                               inference_loader_config, nn.BCEWithLogitsLoss(),
                               epochs=args.epochs_upsample,
                               save_optimizer=args.save_optimizer,
