@@ -109,8 +109,9 @@ class TrainUpSample(TrackedTrainingGAN):
     def train_loss_fn(self, output, target):
         real_features = self.feature_extractor(target)
         fake_features = self.feature_extractor(output)
-        content_loss = self.mse_loss(output, target) + 2e-6 * self.mse_loss(
-            fake_features, real_features)
+        content_loss = torch.sqrt(
+            self.mse_loss(output, target)) + 2e-6 * torch.sqrt(
+            self.mse_loss(fake_features, real_features))
         return content_loss
 
     def valid_loss_fn(self, output, target):
