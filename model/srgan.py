@@ -81,8 +81,7 @@ class GeneratorResNet(nn.Module):
         self.upsampling = nn.Sequential(*upsampling)
 
         # Final output layer
-        self.conv3 = nn.Sequential(nn.Conv2d(64, out_channels, 9, 1, 4),
-                                   nn.Tanh())
+        self.conv3 = nn.Conv2d(64, out_channels, 9, 1, 4)
 
     def forward(self, x):
         out1 = self.conv1(x)
