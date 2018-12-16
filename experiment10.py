@@ -207,7 +207,10 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_dataset = train.valid_dataset
         generator, discriminator = train.train()
 
-    combined = CombinedNetworkDenoiseBefore(dncnn, generator,
-                                            dncnn_built_in_residual=True)
+    if args.skip_denoise:
+        final = generator
+    else:
+        final = CombinedNetworkDenoiseBefore(dncnn, generator,
+                                             dncnn_built_in_residual=True)
 
-    test(combined, args.test_in, args.output_dir, args.valid_batch_size)
+    test(final, args.test_in, args.output_dir, args.valid_batch_size)
