@@ -177,20 +177,21 @@ class TrackedTrainingGAN(TrackedTraining):
             g_ipt, real = self.parse_train_batch(batch)
 
             # train discriminator with real
+            self.d_optimizer.zero_grad()
             batch_size = real.shape[0]
             label = cuda(torch.full((batch_size, 1), real_label))
             output = self.d_model(real)
             loss_real = self.discriminator_loss(output, label)
+            loss_real.backward()
 
             # train discriminator with fake
             fake = self.model(g_ipt)
             label.fill_(fake_label)
             output = self.d_model(fake.detach())
             loss_fake = self.discriminator_loss(output, label)
-            loss_discriminator = loss_real + loss_fake
-            self.d_optimizer.zero_grad()
-            loss_discriminator.backward()
+            loss_fake.backward()
             self.d_optimizer.step()
+            loss_discriminator = loss_real + loss_fake
             d_losses.append(loss_discriminator)
 
             # train generator
