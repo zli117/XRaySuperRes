@@ -58,7 +58,7 @@ class GeneratorResNet(nn.Module):
         # First layer
         self.conv1 = nn.Sequential(
             nn.Conv2d(in_channels, 64, 9, 1, 4),
-            nn.ReLU(inplace=True)
+            nn.ReLU()
         )
 
         # Residual blocks
@@ -77,7 +77,7 @@ class GeneratorResNet(nn.Module):
             upsampling += [nn.Conv2d(64, 256, 3, 1, 1),
                            nn.BatchNorm2d(256),
                            nn.PixelShuffle(upscale_factor=2),
-                           nn.ReLU(inplace=True)]
+                           nn.ReLU()]
         self.upsampling = nn.Sequential(*upsampling)
 
         # Final output layer
@@ -103,7 +103,7 @@ class Discriminator(nn.Module):
             layers = [nn.Conv2d(in_filters, out_filters, 3, stride, 1)]
             if normalize:
                 layers.append(nn.BatchNorm2d(out_filters))
-            layers.append(nn.LeakyReLU(0.2, inplace=True))
+            layers.append(nn.LeakyReLU(0.2))
             return layers
 
         layers = []
@@ -128,7 +128,7 @@ class Discriminator(nn.Module):
         dummy_out = self.convolution(dummy_input)
         self.fc_in_elements = reduce(mul, dummy_out.shape, 1)
         self.fcs = nn.Sequential(nn.Linear(self.fc_in_elements, 1024),
-                                 nn.LeakyReLU(0.2, inplace=True),
+                                 nn.LeakyReLU(0.2),
                                  nn.Linear(1024, 1))
 
     def forward(self, img):
