@@ -56,7 +56,7 @@ def generate_img(a_loader, b_loader, output):
         file_name = batch_a['file_name'][0]
         image_a = batch_a['image'][0, 0]
         image_b = batch_b['image'][0, 0]
-        image_ab = np.concatenate([image_a, image_b])
+        image_ab = np.concatenate([image_a, image_b], axis=1)
         out_img = np.zeros(image_ab.shape + (4,))
         for i in range(3):
             out_img[:, :, i] = image_ab
