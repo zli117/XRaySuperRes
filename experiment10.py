@@ -163,11 +163,15 @@ with torch.cuda.device_ctx_manager(args.device):
         train_split, valid_split = train_test_split(
             image_files, test_size=args.valid_portion)
 
+        srgan_image_in = args.denoise_out
+    else:
+        srgan_image_in = args.image_dir
+
     with Timer():
         print('======== Pre-train SRGAN ========')
-        train_dataset = XRayDataset(train_split, args.denoise_out,
+        train_dataset = XRayDataset(train_split, srgan_image_in,
                                     args.target_dir)
-        valid_dataset = XRayDataset(valid_split, args.denoise_out,
+        valid_dataset = XRayDataset(valid_split, srgan_image_in,
                                     args.target_dir)
         optimizer_config = {'lr': 1e-4}
         generator = GeneratorResNet()
