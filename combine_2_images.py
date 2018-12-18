@@ -25,9 +25,10 @@ files = os.listdir(args.a)
 if not os.path.exists(args.o):
     os.makedirs(args.o)
 
-file_names = XRayDataset(files, args.a)
-a_loader = DataLoader(file_names, num_workers=20)
-b_loader = DataLoader(file_names, num_workers=20)
+a_dataset = XRayDataset(files, args.a)
+b_dataset = XRayDataset(files, args.b)
+a_loader = DataLoader(a_dataset, num_workers=20)
+b_loader = DataLoader(b_dataset, num_workers=20)
 
 progress_bar = ProgressBar(20, ' batch: %d')
 
@@ -38,7 +39,7 @@ for batch_a, batch_b in zip(a_loader, b_loader):
     file_name = batch_a['file_name'][0]
     image_a = batch_a['image'][0]
     image_b = batch_b['image'][0]
-    image_ab = np.concatenate([image_a, image_b], 1)[0]
+    image_ab = np.concatenate([image_a, image_b], 0)[0]
     out_img = np.zeros(image_ab.shape + (4,))
     for i in range(3):
         out_img[:, :, i] = image_ab
