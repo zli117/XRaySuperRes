@@ -38,12 +38,11 @@ for batch_a, batch_b in zip(a_loader, b_loader):
     file_name = batch_a['file_name'][0]
     image_a = batch_a['image'][0]
     image_b = batch_b['image'][0]
-    print(image_a.shape)
     image_ab = np.concatenate([image_a, image_b], 1)[0]
-    print(image_ab.shape)
     out_img = np.zeros(image_ab.shape + (4,))
     for i in range(3):
         out_img[:, :, i] = image_ab
     out_img[:, :, 3] = np.ones(image_ab.shape)
     cv2.imwrite(os.path.join(args.o, file_name), out_img * 255)
     progress_bar.progress(step / total_steps * 100, step)
+    step += 1

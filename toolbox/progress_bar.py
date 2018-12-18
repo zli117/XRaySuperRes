@@ -20,6 +20,9 @@ class ProgressBar:
         self.reset()
 
     def progress(self, percent: float, *info):
+        if self.prev_precent is not None and percent == self.prev_percent:
+            print('Error: Did not update percentage')
+            return
         sys.stdout.write('\r')
         curr_time = time.time()
         eta = ((curr_time - self.prev_time) / (percent - self.prev_percent) *
