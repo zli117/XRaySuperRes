@@ -20,7 +20,7 @@ class ProgressBar:
         self.reset()
 
     def progress(self, percent: float, *info):
-        if self.prev_precent is not None and percent == self.prev_percent:
+        if self.prev_percent is not None and percent == self.prev_percent:
             print('Error: Did not update percentage')
             return
         sys.stdout.write('\r')
