@@ -95,11 +95,13 @@ class PretrainSRGAN(TrainDenoise):
 
 
 class TrainUpSample(TrackedTrainingGAN):
-    def __init__(self, feature_extractor, *args, **kwargs):
+    def __init__(self, *args, feature_extractor=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.mse_loss = nn.MSELoss()
-        self.feature_extractor = cuda(feature_extractor)
-        self.feature_extractor.eval()
+        self.feature_extractor = feature_extractor
+        if feature_extractor is not None:
+            self.feature_extractor = cuda(self.feature_extractor)
+            self.feature_extractor.eval()
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -107,11 +109,12 @@ class TrainUpSample(TrackedTrainingGAN):
         return image, target
 
     def train_loss_fn(self, output, target):
-        real_features = self.feature_extractor(target)
-        fake_features = self.feature_extractor(output)
-        content_loss = torch.sqrt(
-            self.mse_loss(output, target)) + 2e-6 * torch.sqrt(
-            self.mse_loss(fake_features, real_features))
+        content_loss = torch.sqrt(self.mse_loss(output, target))
+        if self.feature_extractor:
+            real_features = self.feature_extractor(target)
+            fake_features = self.feature_extractor(output)
+            content_loss += 2e-6 * torch.sqrt(
+                self.mse_loss(fake_features, real_features))
         return content_loss
 
     def valid_loss_fn(self, output, target):
@@ -194,13 +197,17 @@ with torch.cuda.device_ctx_manager(args.device):
         g_optimizer_config = {'lr': 1e-4}
         d_optimizer_config = {'lr': 5e-4}
         discriminator = Discriminator()
-        feature_extractor = FeatureExtractor(args.vgg19_path)
+        if args.vgg19_path is None:
+            feature_extractor = None
+        else:
+            feature_extractor = FeatureExtractor(args.vgg19_path)
         save_dir = os.path.join(args.save_dir, 'srgan')
-        train = TrainUpSample(feature_extractor, discriminator,
+        train = TrainUpSample(discriminator,
                               generator, train_dataset, valid_dataset, Adam,
                               save_dir, d_optimizer_config, g_optimizer_config,
                               train_loader_config,
                               inference_loader_config, nn.BCEWithLogitsLoss(),
+                              feature_extractor=feature_extractor,
                               epochs=args.epochs_upsample,
                               save_optimizer=args.save_optimizer,
                               discriminator_weight=1e-3)
