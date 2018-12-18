@@ -50,6 +50,9 @@ def generate_img(a_loader, b_loader, output):
     step = 0
     total_steps = len(a_loader)
 
+    if not os.path.exists(output):
+        os.makedirs(output)
+
     for batch_a, batch_b in zip(a_loader, b_loader):
         file_name = batch_a['file_name'][0]
         image_a = batch_a['image'][0, 0]
