@@ -14,7 +14,7 @@ parser.add_argument('-a', help='dir for A images')
 parser.add_argument('-b', help='dir for B images')
 parser.add_argument('-o', help='output dir')
 
-if len(sys.argv) == 0:
+if len(sys.argv) == 1:
     parser.print_help()
     exit(0)
 
