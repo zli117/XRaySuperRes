@@ -1,4 +1,5 @@
 import argparse
+import sys
 
 import torch
 from sklearn.model_selection import train_test_split
@@ -27,7 +28,7 @@ def parse_args():
                         help='validation batch size')
     parser.add_argument('-c', '--epochs_pretrain', type=int, default=300,
                         help='number of epochs for srresnet')
-    parser.add_argument('-p', '--save_dir',
+    parser.add_argument('-p', '--save_dir', required=True,
                         help='dir for saving states')
     parser.add_argument('-g', '--save_optimizer', action='store_true',
                         default=False, help='save optimizer')
@@ -46,6 +47,10 @@ def parse_args():
                         help='output dir for test')
 
     arg = parser.parse_args()
+
+    if len(sys.argv) == 1:
+        parser.print_help()
+        exit(0)
     return arg
 
 
