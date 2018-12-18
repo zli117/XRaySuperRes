@@ -52,7 +52,8 @@ def parse_args():
                         help='target image dir')
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
-    parser.add_argument('-x', '--vgg19_path', help='vgg19 pretrained path')
+    parser.add_argument('-x', '--vgg19_path', default=None,
+                        help='vgg19 pretrained path')
     parser.add_argument('-o', '--output_dir', help='output dir for test')
     parser.add_argument('-y', '--denoise_out',
                         help='output dir for denoised images')
