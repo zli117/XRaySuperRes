@@ -40,8 +40,6 @@ val_b_dataset = XRayDataset(valid_split, args.b)
 val_a_loader = DataLoader(val_a_dataset, num_workers=20)
 val_b_loader = DataLoader(val_b_dataset, num_workers=20)
 
-progress_bar = ProgressBar(20, ' batch: %d')
-
 output_train = os.path.join(args.o, 'train')
 output_val = os.path.join(args.o, 'val')
 
@@ -49,6 +47,7 @@ output_val = os.path.join(args.o, 'val')
 def generate_img(a_loader, b_loader, output):
     step = 0
     total_steps = len(a_loader)
+    progress_bar = ProgressBar(20, ' batch: %d')
 
     if not os.path.exists(output):
         os.makedirs(output)
