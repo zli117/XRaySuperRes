@@ -18,7 +18,7 @@ torch.backends.cudnn.benchmark = False
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Experiment 13 EDSR')
+        description='Experiment 11 EDSR')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.2,
                         help='portion of train dataset used for validation')
     parser.add_argument('-t', '--train_batch_size', type=int, default=16,
@@ -27,7 +27,7 @@ def parse_args():
                         help='validation batch size')
     parser.add_argument('-c', '--epochs_pretrain', type=int, default=300,
                         help='number of epochs for srresnet')
-    parser.add_argument('-p', '--save_dir', default=SAVED_DIR,
+    parser.add_argument('-p', '--save_dir',
                         help='dir for saving states')
     parser.add_argument('-g', '--save_optimizer', action='store_true',
                         default=False, help='save optimizer')
@@ -42,14 +42,8 @@ def parse_args():
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
     parser.add_argument('-x', '--vgg19_path', help='vgg19 pretrained path')
-    parser.add_argument('-o', '--output_dir', default=OUTPUT_DIR,
+    parser.add_argument('-o', '--output_dir',
                         help='output dir for test')
-    parser.add_argument('-ores', '--output_sres',
-                        default="/home/sheng/Workspace/Course/CS446/cs446-project/output-ssres")
-    parser.add_argument('-k', '--k_fold_split', help='file for k fold splits',
-                        default=None)
-    parser.add_argument('-j', '--cv_index', type=int,
-                        help='to run validation for which fold')
 
     arg = parser.parse_args()
     return arg
@@ -119,7 +113,8 @@ with torch.cuda.device_ctx_manager(args.device):
     print('Loading noisy image from', args.image_dir)
     image_files = os.listdir(args.image_dir)
 
-    train_split, valid_split = train_test_split(image_files,test_size=args.valid_portion)
+    train_split, valid_split = train_test_split(image_files,
+                                                test_size=args.valid_portion)
 
     with Timer():
         print('======== EDSR ========')
@@ -143,4 +138,4 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_dataset = train.valid_dataset
         edsrnet = train.train()
 
-    test(edsrnet, args.image_dir, args.output_sres, args.valid_batch_size)
+    test(edsrnet, args.image_dir, args.output_dir, args.valid_batch_size)
