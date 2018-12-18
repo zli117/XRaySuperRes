@@ -16,6 +16,7 @@ parser.add_argument('-o', help='output dir')
 
 if len(sys.argv) == 0:
     parser.print_help()
+    exit(0)
 
 args = parser.parse_args()
 
