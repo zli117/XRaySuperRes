@@ -143,4 +143,4 @@ with torch.cuda.device_ctx_manager(args.device):
             valid_dataset = train.valid_dataset
         edsrnet = train.train()
 
-    test(edsrnet, args.image_dir, args.output_dir, args.valid_batch_size)
+    test(edsrnet, args.test_in, args.output_dir, args.valid_batch_size)
