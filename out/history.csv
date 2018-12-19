@@ -13,3 +13,4 @@ Time, Result, Comment
 2018-12-13 16:39, 7985.0003541506485, SR Resnet trained for 50 epochs. valid loss 0.017693. Exp 10. a42ee708248757fdfbc5db445078d0f846db23fc
 2018-12-14 16:33, 7902.697251037703, SR Resnet trained for 100 epochs. valid loss 0.017330. Exp 10. a42ee708248757fdfbc5db445078d0f846db23fc
 2018-12-19 00:04, 7545.293000044453, EDSR. 183 epochs. batch size: 16 952b8103aacf2fee9fa2cd083d93343d1edd020a
+2018-12-19 13:11, 7303.788015451076, EDSR larger. 127 epochs. batch size: 16 e4c0b7f94719c8f9667a510bc5088aa88d93016d
