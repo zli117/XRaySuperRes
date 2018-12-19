@@ -45,6 +45,8 @@ def parse_args():
     parser.add_argument('-x', '--vgg19_path', help='vgg19 pretrained path')
     parser.add_argument('-o', '--output_dir',
                         help='output dir for test')
+    parser.add_argument('-y', '--loss', type=str,
+                        help='which loss to use: l1 or l2')
 
     arg = parser.parse_args()
 
@@ -72,10 +74,18 @@ class TrainDenoise(TrackedTraining):
 
 
 class PretrainSRGAN(TrackedTraining):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, loss, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.mse_loss = nn.MSELoss()
-        self.l1_loss = nn.L1Loss()
+        mse_loss = nn.MSELoss()
+        l1_loss = nn.L1Loss()
+        self.mse_loss = mse_loss
+        if loss == 'l1':
+            self.train_loss = l1_loss
+        elif loss == 'l2':
+            self.train_loss = mse_loss
+        else:
+            print('invalid loss type')
+            exit(1)
 
     def parse_train_batch(self, batch):
         image = cuda(batch['image'])
@@ -83,7 +93,7 @@ class PretrainSRGAN(TrackedTraining):
         return image, target
 
     def train_loss_fn(self, output, target):
-        return self.l1_loss(output, target)
+        return self.train_loss(output, target)
 
     def valid_loss_fn(self, output, target):
         return torch.sqrt(self.mse_loss(output, target))
