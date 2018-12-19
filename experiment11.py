@@ -47,6 +47,8 @@ def parse_args():
                         help='output dir for test')
     parser.add_argument('-y', '--loss', type=str,
                         help='which loss to use: l1 or l2')
+    parser.add_argument('-z', '--smaller_edsr', default=False,
+                        action='store_true', help='using smaller edsr')
 
     arg = parser.parse_args()
 
@@ -140,7 +142,13 @@ with torch.cuda.device_ctx_manager(args.device):
         valid_dataset = XRayDataset(valid_split, args.image_dir,
                                     args.target_dir)
         optimizer_config = {'lr': 5e-5}
-        edsrnet = EDSR(n_res_blocks=32, n_feats=128)
+        if args.smaller_edsr:
+            print('using small network')
+            net_config = {'n_res_block': 16, 'n_feats': 64}
+        else:
+            print('using large network')
+            net_config = {'n_res_block': 32, 'n_feats': 128}
+        edsrnet = EDSR(**net_config)
         save_dir = os.path.join(args.save_dir, 'srres')
         train = PretrainSRGAN(args.loss, edsrnet, train_dataset, valid_dataset,
                               Adam, save_dir, optimizer_config,
