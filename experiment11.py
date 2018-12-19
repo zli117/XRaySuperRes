@@ -86,7 +86,8 @@ class PretrainSRGAN(TrackedTraining):
             self.train_loss = l1_loss
         elif loss == 'l2':
             print('Using l2 loss')
-            self.train_loss = mse_loss
+            self.train_loss = lambda output, target: torch.sqrt(
+                mse_loss(output, target))
         else:
             print('invalid loss type')
             exit(1)
