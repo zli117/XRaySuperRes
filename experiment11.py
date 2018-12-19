@@ -80,8 +80,10 @@ class PretrainSRGAN(TrackedTraining):
         l1_loss = nn.L1Loss()
         self.mse_loss = mse_loss
         if loss == 'l1':
+            print('Using l1 loss')
             self.train_loss = l1_loss
         elif loss == 'l2':
+            print('Using l2 loss')
             self.train_loss = mse_loss
         else:
             print('invalid loss type')
