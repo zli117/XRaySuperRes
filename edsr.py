@@ -19,7 +19,7 @@ torch.backends.cudnn.benchmark = False
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Experiment 11 EDSR')
+        description='EDSR experiment')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.2,
                         help='portion of train dataset used for validation')
     parser.add_argument('-t', '--train_batch_size', type=int, default=16,

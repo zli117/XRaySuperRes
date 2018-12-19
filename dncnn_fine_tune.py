@@ -19,7 +19,7 @@ from util.test import test
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Experiment 7 Independent Fine-tune')
+        description='Fine-tune with DNCNN after denoising and super resolution')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.2,
                         help='portion of train dataset used for validation')
     parser.add_argument('-t', '--train_batch_size', type=int, default=16,
