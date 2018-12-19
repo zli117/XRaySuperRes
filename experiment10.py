@@ -196,7 +196,7 @@ with torch.cuda.device_ctx_manager(args.device):
     with Timer():
         print('======== Training SRGAN ========')
         g_optimizer_config = {'lr': 1e-4}
-        d_optimizer_config = {'lr': 5e-4}
+        d_optimizer_config = {'lr': 1e-4}
         discriminator = Discriminator()
         if args.vgg19_path is None:
             feature_extractor = None
@@ -211,7 +211,7 @@ with torch.cuda.device_ctx_manager(args.device):
                               feature_extractor=feature_extractor,
                               epochs=args.epochs_upsample,
                               save_optimizer=args.save_optimizer,
-                              discriminator_weight=1e-3)
+                              discriminator_weight=1e-1)
         if args.sr_state_path is not None:
             state_dict = torch.load(args.sr_state_path)
             train.load(state_dict)
