@@ -12,3 +12,4 @@ Time, Result, Comment
 2018-12-07 01:28, 7916.102154516733, Increased lr to 3e-5for finetune. Reduced to 1e-5 after 120 epochs. Trained for 120 epochs. e8229de109be48040c28146b15dcb75ce4c07264
 2018-12-13 16:39, 7985.0003541506485, SR Resnet trained for 50 epochs. valid loss 0.017693. Exp 10. a42ee708248757fdfbc5db445078d0f846db23fc
 2018-12-14 16:33, 7902.697251037703, SR Resnet trained for 100 epochs. valid loss 0.017330. Exp 10. a42ee708248757fdfbc5db445078d0f846db23fc
+2018-12-19 00:04, 7545.293000044453, EDSR. 183 epochs. batch size: 16 952b8103aacf2fee9fa2cd083d93343d1edd020a
