@@ -5,14 +5,11 @@ from model import common
 
 class EDSR(nn.Module):
     def __init__(self, channels=1, scale=2, res_scale=1,
-                 n_res_blocks=16, n_feats=64, rgb_range=1,
-                 conv=common.default_conv):
+                 n_res_blocks=16, n_feats=64, conv=common.default_conv):
         super(EDSR, self).__init__()
 
         kernel_size = 3
         act = nn.ReLU(True)
-        # self.sub_mean = common.MeanShift(rgb_range)
-        # self.add_mean = common.MeanShift(rgb_range, sign=1)
 
         # define head module
         m_head = [conv(channels, n_feats, kernel_size)]
@@ -36,14 +33,12 @@ class EDSR(nn.Module):
         self.tail = nn.Sequential(*m_tail)
 
     def forward(self, x):
-        # x = self.sub_mean(x)
         x = self.head(x)
 
         res = self.body(x)
         res += x
 
         x = self.tail(res)
-        # x = self.add_mean(x)
 
         return x
 
