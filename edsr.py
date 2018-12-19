@@ -26,8 +26,8 @@ def parse_args():
                         help='train batch size')
     parser.add_argument('-b', '--valid_batch_size', type=int, default=16,
                         help='validation batch size')
-    parser.add_argument('-c', '--epochs_pretrain', type=int, default=300,
-                        help='number of epochs for srresnet')
+    parser.add_argument('-c', '--epochs', type=int, default=300,
+                        help='number of epochs for training')
     parser.add_argument('-p', '--save_dir', required=True,
                         help='dir for saving states')
     parser.add_argument('-g', '--save_optimizer', action='store_true',
@@ -42,7 +42,6 @@ def parse_args():
                         help='target image dir')
     parser.add_argument('-w', '--test_in', default=TEST_IMG,
                         help='test input dir')
-    parser.add_argument('-x', '--vgg19_path', help='vgg19 pretrained path')
     parser.add_argument('-o', '--output_dir',
                         help='output dir for test')
     parser.add_argument('-y', '--loss', type=str,
@@ -50,11 +49,12 @@ def parse_args():
     parser.add_argument('-z', '--smaller_edsr', default=False,
                         action='store_true', help='using smaller edsr')
 
-    arg = parser.parse_args()
-
     if len(sys.argv) == 1:
         parser.print_help()
         exit(0)
+
+    arg = parser.parse_args()
+
     return arg
 
 
@@ -154,7 +154,7 @@ with torch.cuda.device_ctx_manager(args.device):
         train = PretrainSRGAN(args.loss, edsrnet, train_dataset, valid_dataset,
                               Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
-                              epochs=args.epochs_pretrain,
+                              epochs=args.epochs,
                               save_optimizer=args.save_optimizer)
         if args.sr_res_state_path is not None:
             state_dict = torch.load(args.sr_res_state_path)

@@ -21,7 +21,7 @@ torch.backends.cudnn.benchmark = True
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description='Experiment 10 SRGAN')
+        description='SRResNet and SRGAN experiment')
     parser.add_argument('-v', '--valid_portion', type=float, default=0.2,
                         help='portion of train dataset used for validation')
     parser.add_argument('-t', '--train_batch_size', type=int, default=16,
@@ -58,7 +58,8 @@ def parse_args():
     parser.add_argument('-y', '--denoise_out',
                         help='output dir for denoised images')
     parser.add_argument('-k', '--skip_denoise', default=False,
-                        action='store_true', help='skip the first dncnn')
+                        action='store_true',
+                        help='skip the first denoise network')
 
     if len(sys.argv) == 1:
         parser.print_help()
