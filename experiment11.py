@@ -142,7 +142,7 @@ with torch.cuda.device_ctx_manager(args.device):
         optimizer_config = {'lr': 5e-5}
         edsrnet = EDSR(n_res_blocks=32, n_feats=128)
         save_dir = os.path.join(args.save_dir, 'srres')
-        train = PretrainSRGAN(edsrnet, train_dataset, valid_dataset,
+        train = PretrainSRGAN(args.loss, edsrnet, train_dataset, valid_dataset,
                               Adam, save_dir, optimizer_config,
                               train_loader_config, inference_loader_config,
                               epochs=args.epochs_pretrain,
