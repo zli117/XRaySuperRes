@@ -40,6 +40,9 @@ Shengkun Cui (scui8), Zonglin Li (zli117)
     ```bash
     python edsr.py -t 16 -b 16 -c 150 -g -z -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
     ```
-    
+
+## Hyper Parameters
+* For all training: batch size = 16, initial learning rate = 5e-5, reduced after 100 epochs
+
 ## Submission log:
 `out/history.csv`
