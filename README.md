@@ -1,7 +1,7 @@
 # CS446-Project
 
 ## Name and NetID:
-scui8, zli117
+Shengkun Cui (scui8), Zonglin Li (zli117)
 
 
 ## Inspirations:
