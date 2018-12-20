@@ -34,11 +34,11 @@ Shengkun Cui (scui8), Zonglin Li (zli117)
   * We have tried both L1 loss and L2 loss. And L2 loss produced more visually blurry images.
   * Run the large model with L1 loss: 32 ResBlock, each layer generates 128 feature maps:
     ```bash
-    python edsr.py -t 16 -b 16 -c 150 -g -z -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
+    python edsr.py -t 16 -b 16 -c 150 -g -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
     ```
   * Run the small model with L1 loss: 16 ResBlock, each layer generates 64 feature maps:
     ```bash
-    python edsr.py -t 16 -b 16 -c 150 -g -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
+    python edsr.py -t 16 -b 16 -c 150 -g -z -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
     ```
     
 ## Submission log:
