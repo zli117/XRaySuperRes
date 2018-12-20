@@ -23,11 +23,11 @@ Shengkun Cui (scui8), Zonglin Li (zli117)
   * The pipeline has several stages: DNCNN (optional) -> SRResNet -> SRGAN (optional)
   * Run (train with SRGAN, without DNCNN): 
     ```bash
-    python srgan -t 16 -b 16 -k -c 50 -u 100 -p <dir for saving checkpoints> -g -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
+    python srgan.py -t 16 -b 16 -k -c 50 -u 100 -p <dir for saving checkpoints> -g -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
     ```
   * Run (only with SRResNet): 
     ```bash
-    python srgan -t 16 -b 16 -k -c 100 -u 0 -p <dir for saving checkpoints> -g -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
+    python srgan.py -t 16 -b 16 -k -c 100 -u 0 -p <dir for saving checkpoints> -g -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>
     ```
 * EDSR:
   * EDSR gives the best result so far, and we generated our final submission using it.
