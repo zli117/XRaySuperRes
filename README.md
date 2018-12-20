@@ -1,7 +1,8 @@
 # CS446-Project
 
-## Submission log:
-`out/history.csv`
+## Name and NetID:
+scui8, zli117
+
 
 ## Inspirations:
 * We initially tried a baseline implementation of ESPCN. It achieved a satisfactory result of 9500
@@ -29,3 +30,6 @@
     ```python edsr.py -t 16 -b 16 -c 150 -g -z -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>```
   * Run the small model with L1 loss: 16 ResBlock, each layer generates 64 feature maps:
     ```python edsr.py -t 16 -b 16 -c 150 -g -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>```
+    
+## Submission log:
+`out/history.csv`
