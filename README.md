@@ -1,5 +1,8 @@
 # CS446-Project
 
+## Submission log:
+`out/history.csv`
+
 ## Architectures:
 
 * DNCNN + ESPCN:
@@ -20,4 +23,3 @@
     `python edsr.py -t 16 -b 16 -c 150 -g -z -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>`
   * Run the small model with L1 loss: 16 ResBlock, each layer generates 64 feature maps:
     `python edsr.py -t 16 -b 16 -c 150 -g -y l1 -p <dir for saving checkpoints> -i <dir for lr images> -l <dir for hr images> -w <dir for test split> -o <dir for generating processed test split>`
-
