@@ -1,8 +1,13 @@
-# CS446-Project
+# X Ray Denoising and Super-resolution
 
 ## Name and NetID:
-Shengkun Cui (scui8), Zonglin Li (zli117)
+Zonglin Li (zli117), Shengkun Cui (scui8)
 
+## Sample input and output
+|Low Resolution with Noise|High Resolution|
+|-------------------------|---------------|
+|![low_res1](data/sample/train_04000.png)|![high_res1](data/sample/train_04000_target.png)|
+|![low_res2](data/sample/train_04003.png)|![high_res2](data/sample/train_04003_target.png)|
 
 ## Inspirations:
 * We initially tried a baseline implementation of ESPCN. It achieved a satisfactory result of 9500
