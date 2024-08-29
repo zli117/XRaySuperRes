@@ -1,8 +1,5 @@
 # X Ray Denoising and Super-resolution
 
-## Name and NetID:
-Zonglin Li (zli117), Shengkun Cui (scui8)
-
 ## Sample input and output
 |Low Resolution with Noise|High Resolution|
 |-------------------------|---------------|
